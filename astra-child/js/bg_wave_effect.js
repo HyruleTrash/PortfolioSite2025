@@ -40,6 +40,7 @@ class Vector2 {
 class WaveElement extends HTMLElement {
 	static observedAttributes = ["start_color", "end_color"];
     verticalPadding = 20;
+    waveSize;
 	startColor;
 	endColor;
 	width = 0;
@@ -57,6 +58,10 @@ class WaveElement extends HTMLElement {
 		// Retrieve start color
 		this.startColor = this.parseRgba(this.getAttribute('start_color'));
 		this.endColor = this.parseRgba(this.getAttribute('end_color'));
+
+        // Retrieve wave size
+        this.waveSize = this.parseNumber(this.getAttribute('wave_size'));
+        this.verticalPadding += this.waveSize;
 		
 		// Create SVG element
         this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -176,10 +181,10 @@ class WaveElement extends HTMLElement {
     initializeEdgePoints(){
         this.edgePointsPercentage = {
             top: Array(this.topPointsElements.length).fill(null).map((_, i) => (
-                new Vector2(this.randomRange(0, 100 / (this.topPointsElements.length + 1)) * (i + 1), 0)
+                new Vector2(this.randomRange(0, 100 / (this.topPointsElements.length + 1)) * (i + 1), 0 + this.randomRange(0, this.waveSize))
             )),
             bottom: Array(this.bottomPointsElements.length).fill(null).map((_, i) => (
-                new Vector2(this.randomRange(0, 100 / (this.bottomPointsElements.length + 1)) * (i + 1), 100)
+                new Vector2(this.randomRange(0, 100 / (this.bottomPointsElements.length + 1)) * (i + 1), 100 + this.randomRange(0, this.waveSize))
             ))
         };
     }
@@ -192,34 +197,21 @@ class WaveElement extends HTMLElement {
         return (percentage * this.height) - this.verticalPadding * verticalPaddingDir;
     }
 
-    updateEdgePoints(){
-        function sortBasedOnX(a, b) {
-            if (a.x < b.x) return -1;
-            if (a.x > b.x) return 1;
-            return 0;
-        }
+    sortBasedOnX(a, b) {
+        if (a.x < b.x) return -1;
+        if (a.x > b.x) return 1;
+        return 0;
+    }
 
+    updateEdgePoints(){
         this.edgePoints = {
             top: Array(this.topPointsElements.length).fill(null).map((_, i) => (
                 new Vector2(this.getEdgePointX(this.edgePointsPercentage.top[i].x / 100), this.getEdgePointY(this.edgePointsPercentage.top[i].y / 100, -1))
-            )),
+            )).sort((a, b) => this.sortBasedOnX(a, b)),
             bottom: Array(this.bottomPointsElements.length).fill(null).map((_, i) => (
                 new Vector2(this.getEdgePointX(this.edgePointsPercentage.bottom[i].x / 100), this.getEdgePointY(this.edgePointsPercentage.bottom[i].y / 100))
-            ))
+            )).sort((a, b) => this.sortBasedOnX(a, b))
         };
-        
-        console.log("before sort");
-        this.edgePoints.top.forEach(element => {
-            console.log(element);
-        });
-
-        this.edgePoints.top = this.edgePoints.top.sort((a, b) => sortBasedOnX(a, b));
-        this.edgePoints.bottom = this.edgePoints.bottom.sort((a, b) => sortBasedOnX(a, b));
-        
-        console.log("after sort");
-        this.edgePoints.top.forEach(element => {
-            console.log(element);
-        });
     }
 
 	updateShapeSize(){
@@ -249,17 +241,16 @@ class WaveElement extends HTMLElement {
 	}
 
 	createShape() {
-        console.log(this.edgePoints);
-
         // Create polygon with all points
         const points = [
             ...this.cornerPoints[0].toArray(),
             ...this.edgePoints.top,
             ...this.cornerPoints[1].toArray(),
             ...this.cornerPoints[2].toArray(),
-            ...this.edgePoints.bottom,
+            ...[...this.edgePoints.bottom].reverse(),
             ...this.cornerPoints[3].toArray()
         ];
+
 		const pointsString = points.map(point => `${point.x},${point.y}`).join(' ');
 
         this.polygonElement.setAttribute('points', pointsString);
@@ -271,6 +262,10 @@ class WaveElement extends HTMLElement {
 		const [r, g, b, a] = value.split(',').map(Number);
 		return new Color(r, g, b, a);
 	}
+
+    parseNumber(value){
+        return Number(value) || 0;
+    }
 }
 
 customElements.define('wave-svg-element', WaveElement);
