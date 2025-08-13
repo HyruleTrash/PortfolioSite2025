@@ -51,7 +51,7 @@ class WaveElement extends HTMLElement {
 	cornerPointsElements = Array(4);
     topPointsElements;
     bottomPointsElements;
-    polygonElement;
+    pathElement;
 
 	constructor() {
 		super();
@@ -88,11 +88,11 @@ class WaveElement extends HTMLElement {
         // Create circles for points
         this.initializePoints();
 
-        this.polygonElement = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-        this.polygonElement.style.fill = 'none';
-        this.polygonElement.style.stroke = 'black';
-        this.polygonElement.style.strokeWidth = '1';
-        this.svg.appendChild(this.polygonElement);
+        this.pathElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        this.pathElement.style.fill = 'none';
+        this.pathElement.style.stroke = 'black';
+        this.pathElement.style.strokeWidth = '1';
+        this.svg.appendChild(this.pathElement);
 		
 		this.isAnimating = false;
 	}
@@ -264,7 +264,7 @@ class WaveElement extends HTMLElement {
 	}
 
 	createShape() {
-        // Create polygon with all points
+        // Create path with all points
         const points = [
             ...this.cornerPoints[0].toArray(),
             ...this.edgePoints.top,
@@ -274,9 +274,13 @@ class WaveElement extends HTMLElement {
             ...this.cornerPoints[3].toArray()
         ];
 
-		const pointsString = points.map(point => `${point.x},${point.y}`).join(' ');
+		const pathData = points.map((point, index) => 
+            {
+                if (index === 0) return `M ${point.x},${point.y}`;
+                return `L ${point.x},${point.y}`;
+            }).join(' ') + "Z";
 
-        this.polygonElement.setAttribute('points', pointsString);
+        this.pathElement.setAttribute('d', pathData);
     }
 	
 	parseRgba(value) {
