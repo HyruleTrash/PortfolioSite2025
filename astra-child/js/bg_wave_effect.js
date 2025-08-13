@@ -40,6 +40,9 @@ class Vector2 {
 class WaveElement extends HTMLElement {
 	static observedAttributes = ["start_color", "end_color"];
     verticalPadding = 20;
+    minPointDistance = 10;
+    minPointAmount = 3;
+    maxPointAmount = 5;
     waveSize;
 	startColor;
 	endColor;
@@ -76,8 +79,8 @@ class WaveElement extends HTMLElement {
         this.style.position = "absolute";
 
         // Generate random points along edges
-        this.topPointsElements = Array(this.randomRange(2, 3));
-        this.bottomPointsElements = Array(this.randomRange(2, 3));
+        this.topPointsElements = Array(this.randomRange(this.minPointAmount, this.maxPointAmount));
+        this.bottomPointsElements = Array(this.randomRange(this.minPointAmount, this.maxPointAmount));
 
 		// Add the wave to the shadow DOM
 		shadow.appendChild(this.svg);
@@ -112,7 +115,6 @@ class WaveElement extends HTMLElement {
 
         for (let i = 0; i < this.topPointsElements.length; i++) {
 			const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            // console.log(`${this.edgePointsPercentage.top[i].x}`);
 			circle.setAttribute('cx', this.edgePoints.top[i].x);
 			circle.setAttribute('cy', this.edgePoints.top[i].y);
 			circle.setAttribute('r', '4');
@@ -178,15 +180,37 @@ class WaveElement extends HTMLElement {
 		this.height = this.offsetHeight;
     }
 
+    getRandomPoint(maxProcentX, minProcentY, array){
+        while (true) {
+            let foundPoint = new Vector2(this.randomRange(0, maxProcentX), minProcentY + this.randomRange(0, this.waveSize));
+            let alone = true;
+            for (let i = 0; i < array.length; i++) {
+                const vector = array[i];
+                if (vector === undefined)
+                    continue;
+                if (Math.abs(vector.x - foundPoint.x) <= this.minPointDistance){
+                    alone = false;
+                    break;
+                }
+            }
+            if (alone)
+                return foundPoint;
+        }
+    }
+
     initializeEdgePoints(){
+
         this.edgePointsPercentage = {
-            top: Array(this.topPointsElements.length).fill(null).map((_, i) => (
-                new Vector2(this.randomRange(0, 100 / (this.topPointsElements.length + 1)) * (i + 1), 0 + this.randomRange(0, this.waveSize))
-            )),
-            bottom: Array(this.bottomPointsElements.length).fill(null).map((_, i) => (
-                new Vector2(this.randomRange(0, 100 / (this.bottomPointsElements.length + 1)) * (i + 1), 100 + this.randomRange(0, this.waveSize))
-            ))
+            top: Array(this.topPointsElements.length),
+            bottom: Array(this.bottomPointsElements.length)
         };
+
+        for (let i = 0; i < this.edgePointsPercentage.top.length; i++) {
+            this.edgePointsPercentage.top[i] = this.getRandomPoint(100 / (this.topPointsElements.length + 1) * (i + 1), 0, this.edgePointsPercentage.top);
+        }
+        for (let i = 0; i < this.edgePointsPercentage.bottom.length; i++) {
+            this.edgePointsPercentage.bottom[i] = this.getRandomPoint(100 / (this.bottomPointsElements.length + 1) * (i + 1), 100, this.edgePointsPercentage.bottom);
+        }
     }
 
     getEdgePointX(percentage){
@@ -217,7 +241,6 @@ class WaveElement extends HTMLElement {
 	updateShapeSize(){
 		if (this.width == this.offsetWidth && this.height == this.offsetHeight)
 			return;
-		// console.log(`${this.width} == ${this.offsetWidth} && ${this.height} == ${this.offsetHeight}`);
 		
         this.updateContentSize();
         this.updateCornerVectors();
