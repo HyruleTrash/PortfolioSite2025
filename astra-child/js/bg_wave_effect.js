@@ -61,17 +61,26 @@ class Vector2 {
         result.y *= other;
         return result;
     }
+
+    getDirectionTowards(other){
+        const dx = other.x - this.x;
+        const dy = other.y - this.y;
+        const magnitude = Math.sqrt(dx*dx + dy*dy);
+        if (magnitude == 0)
+            return new Vector2(0, 0);
+        return new Vector2(dx/magnitude, dy/magnitude);
+    }
 }
 
 class WaveElement extends HTMLElement {
 	static observedAttributes = ["start_color", "end_color"];
     verticalPadding = 20;
     minPointDistance = 10;
-    minPointAmount = 3;
-    maxPointAmount = 5;
+    minPointAmount = 5;
+    maxPointAmount = 8;
     waveSize;
     waveDirectionStrength = 50;
-    waveOffsetStrength = 25;
+    waveOffsetStrength = 50;
 	startColor;
 	endColor;
 	width = 0;
@@ -93,7 +102,7 @@ class WaveElement extends HTMLElement {
         // Retrieve wave size
         this.waveSize = this.parseNumber(this.getAttribute('wave_size'));
         this.verticalPadding += this.waveSize;
-        this.verticalPadding += this.waveOffsetStrength + this.waveDirectionStrength;
+        this.verticalPadding += this.waveOffsetStrength;
 		
 		// Create SVG element
         this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -233,50 +242,56 @@ class WaveElement extends HTMLElement {
             bottom: Array(this.bottomPointsElements.length)
         };
 
+        // Calculate top points as before
         for (let i = 0; i < this.edgePointsPercentage.top.length; i++) {
             this.edgePointsPercentage.top[i] = this.getRandomPointX(100 / (this.topPointsElements.length + 1) * (i + 1), this.edgePointsPercentage.top);
             this.edgePointsPercentage.top[i].y = this.randomRange(0, this.waveSize);
         }
+
+        // Copy positions but mirror directions for bottom
         for (let i = 0; i < this.edgePointsPercentage.bottom.length; i++) {
-            this.edgePointsPercentage.bottom[i] = new Vector2(this.edgePointsPercentage.top[i].x, 100 + this.randomRange(0, this.waveSize));
+            const topPoint = this.edgePointsPercentage.top[i];
+            
+            // Create mirrored point
+            this.edgePointsPercentage.bottom[i] = new Vector2(topPoint.x, 100 - topPoint.y);
+            
+            // Mirror the direction vector
+            if (topPoint.direction) {
+                this.edgePointsPercentage.bottom[i].direction = {
+                    x: -topPoint.direction.x,
+                    y: -topPoint.direction.y
+                };
+            }
         }
 
         this.edgePointsPercentage.top.sort((a, b) => this.sortBasedOnX(a, b));
-        this.edgePointsPercentage.bottom.sort((a, b) => this.sortBasedOnX(a, b)).reverse();
+        this.edgePointsPercentage.bottom.sort((a, b) => this.sortBasedOnX(a, b));
 
         let lastDir = 0;
+        
         for (let i = 0; i < this.edgePointsPercentage.top.length; i++) {
             const point = this.edgePointsPercentage.top[i];
             const nextPoint = this.edgePointsPercentage.top[(i + 1) % this.edgePointsPercentage.top.length];
-            const pointB = this.edgePointsPercentage.bottom[i];
-            const nextPointB = this.edgePointsPercentage.bottom[(i + 1) % this.edgePointsPercentage.bottom.length];
+            const cp = new Vector2(nextPoint.x, nextPoint.y).getDirectionTowards(point);
 
-            const cp = new Vector2(
-                (point.x + nextPoint.x),
-                (point.y + nextPoint.y)
-            ).normalize();
-            const cpB = new Vector2(
-                (pointB.x + nextPointB.x),
-                (pointB.y + nextPointB.y)
-            ).normalize();
-
-            if (lastDir == 0){
-                if (this.randomRange(0, 1) >= 0.5)
-                    lastDir = 1;
-                else
-                    lastDir = -1;
+            if (i === 0) {
+                lastDir = this.randomRange(0, 1) >= 0.5 ? 1 : -1;
+            }else {
+                // Force opposite direction of previous curve
+                lastDir *= -1;
             }
+            if (i == this.edgePointsPercentage.top.length - 1)
+                lastDir *= -1;
             
             if (lastDir == 1){
                 this.edgePointsPercentage.top[i].direction = new Vector2(-cp.y, cp.x).toArray()[0];
-                this.edgePointsPercentage.bottom[i].direction = new Vector2(-cpB.y, cpB.x).toArray()[0];
-            }
-            else{
+                this.edgePointsPercentage.bottom[i].direction = new Vector2(cp.y, -cp.x).toArray()[0]; // Mirrored version
+            } else {
                 this.edgePointsPercentage.top[i].direction = new Vector2(cp.y, -cp.x).toArray()[0];
-                this.edgePointsPercentage.bottom[i].direction = new Vector2(cpB.y, -cpB.x).toArray()[0];
+                this.edgePointsPercentage.bottom[i].direction = new Vector2(-cp.y, cp.x).toArray()[0]; // Mirrored version
             }
-            // this.edgePointsPercentage.bottom[i].direction = this.edgePointsPercentage.top[i].direction;
-            lastDir = -lastDir;
+
+            console.log(`Curve ${i}: Direction multiplier = ${lastDir}`);
         }
 
         console.log(this.edgePointsPercentage);
@@ -364,20 +379,42 @@ class WaveElement extends HTMLElement {
             }
             
             // Calculate control points for curves
-			const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            // let cp = new Vector2();
+            let cp = new Vector2(prevPoint.x, prevPoint.y).getDirectionTowards(point).muliply(this.waveOffsetStrength);
+            
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute('cx', prevPoint.x + cp.x);
+            circle.setAttribute('cy', prevPoint.y + cp.y);
+            circle.setAttribute('r', '3');
+            circle.style.fill = '#44ff51ff';
+            this.svg.appendChild(circle);
 
-            // const usedOffset = i > bottomPos && i < bottomPos + this.edgePoints.bottom.length ? point : prevPoint;
-            const cp = new Vector2(
-                (point.x + nextPoint.x) / 2,
-                (point.y + nextPoint.y) / 2
-            ).normalize().muliply(this.waveDirectionStrength).add(prevPoint).add(new Vector2(point.direction.x, point.direction.y).muliply(this.waveOffsetStrength));
+
+            let cpOffset = new Vector2();
+            if (i > bottomPos && i < bottomPos + this.edgePoints.bottom.length){
+                cpOffset = new Vector2(
+                    prevPoint.x + point.direction.x * this.waveDirectionStrength,
+                    prevPoint.y + point.direction.y * this.waveDirectionStrength
+                );
+            }else{
+                cpOffset = new Vector2(
+                    prevPoint.x + -point.direction.x * this.waveDirectionStrength,
+                    prevPoint.y + -point.direction.y * this.waveDirectionStrength
+                );
+            }
+
+            cp = cpOffset.add(cp);
+            // cp = cpOffset;
+            
+            // Draw control point circles
+            const circle1 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle1.setAttribute('cx', cp.x);
+            circle1.setAttribute('cy', cp.y);
+            circle1.setAttribute('r', '3');
+            circle1.style.fill = '#4444ff';
+            this.svg.appendChild(circle1);
+        
             pathData += `Q ${cp.x},${cp.y} ${point.x},${point.y} `;
-
-			circle.setAttribute('cx', cp.x);
-			circle.setAttribute('cy', cp.y);
-			circle.setAttribute('r', '3');
-			circle.style.fill = '#4444ff';
-			this.svg.appendChild(circle);
         }
         pathData += 'Z';
 
