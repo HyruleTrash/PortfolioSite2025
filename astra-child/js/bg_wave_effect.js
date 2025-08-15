@@ -89,7 +89,7 @@ class Vector2 {
 }
 
 class WaveElement extends HTMLElement {
-	static observedAttributes = ["start_color", "end_color", "wave_size", "min_waves", "max_waves", "wave_direction", "gradient_direction"];
+	static observedAttributes = ["start_color", "end_color", "wave_size", "min_waves", "max_waves", "gradient_direction"];
     verticalPadding = 20;
     minPointDistance = 50;
     minPointAmount = 5;
@@ -127,8 +127,7 @@ class WaveElement extends HTMLElement {
         this.maxPointAmount = this.parseNumber(this.getAttribute('max_waves'));
         this.maxPointAmount = this.maxPointAmount == 0 ? 8 : this.maxPointAmount;
 
-        // Retrieve directional values
-        this.globalWaveDirection = this.parseVector2(this.getAttribute('wave_direction'));
+        // Retrieve directional values gradient
         this.gradientDirection = this.parseVector2(this.getAttribute('gradient_direction'));
         if (this.gradientDirection == null)
             this.gradientDirection = new Vector2(0.5, 1);
