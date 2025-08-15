@@ -25,22 +25,25 @@ function add_bg_wave_effect( $atts ){
     }
 
 	$minWaves = $atts['min_waves'];
-    // Validate waveSize format
+    // Validate min_waves format
     if (!validityCheckNumber($waveSize)) {
         return "<span>[bg_wave_effect] Invalid min_waves format</span>";
     }
 	$maxWaves = $atts['max_waves'];
-    // Validate waveSize format
+    // Validate max_waves format
     if (!validityCheckNumber($waveSize)) {
         return "<span>[bg_wave_effect] Invalid max_waves format</span>";
     }
+
+	$gradientDir = parseVector2($atts['gradient_direction']);
 	
 	$output = "<wave-svg-element style='height: {$height}'";
 	$startColorHtml = "start_color='{$startColor['red']},{$startColor['green']},{$startColor['blue']},{$startColor['alpha']}'";
 	$endColorHtml = "end_color='{$endColor['red']},{$endColor['green']},{$endColor['blue']},{$endColor['alpha']}'";
 	$minMaxWavesHtml = "min_waves='{$minWaves}' max_waves='{$maxWaves}'";
+	$gradientDirHtml = "gradient_direction='{$gradientDir['x']},{$gradientDir['y']}'";
 	$waveSizeHtml = "wave_size='{$waveSize}'";
 	
-	return "{$output} {$startColorHtml} {$endColorHtml} {$waveSizeHtml} {$minMaxWavesHtml}/>";
+	return "{$output} {$startColorHtml} {$endColorHtml} {$waveSizeHtml} {$gradientDirHtml} {$minMaxWavesHtml}/>";
 }
 ?>

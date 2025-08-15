@@ -36,6 +36,32 @@ function parseRGBA($colorString): ?array {
     ];
 }
 
+function parseVector2(?string $coordinateString): ?array {
+    // Handle null input
+    if ($coordinateString === null) {
+        return null;
+    }
+
+    // Split the string by comma and clean whitespace
+    $coordinates = array_map('trim', explode(',', strval($coordinateString)));
+    
+    // Validate we got exactly two coordinates
+    if (count($coordinates) !== 2) {
+        return null;
+    }
+
+    // Convert to floats and validate numbers
+    $x = floatval($coordinates[0]);
+    $y = floatval($coordinates[1]);
+
+    // Check if conversion produced valid numbers
+    if (!is_numeric($x) || !is_numeric($y)) {
+        return null;
+    }
+
+    return ['x' => $x, 'y' => $y];
+}
+
 function validityCheckNumber($numberString) : bool{
     if (!isset($numberString) || !preg_match('/^\d+(?:\.\d+)?$/', $numberString))
         return false;

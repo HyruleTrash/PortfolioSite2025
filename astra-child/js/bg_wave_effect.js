@@ -89,7 +89,7 @@ class Vector2 {
 }
 
 class WaveElement extends HTMLElement {
-	static observedAttributes = ["start_color", "end_color", "wave_size", "min_waves", "max_waves"];
+	static observedAttributes = ["start_color", "end_color", "wave_size", "min_waves", "max_waves", "wave_direction", "gradient_direction"];
     verticalPadding = 20;
     minPointDistance = 50;
     minPointAmount = 5;
@@ -99,6 +99,7 @@ class WaveElement extends HTMLElement {
     waveOffsetStrength = 50;
 	startColor;
 	endColor;
+    gradientDirection;
 	width = 0;
 	height = 0;
 	// cornerPointsElements = Array(4);
@@ -125,6 +126,12 @@ class WaveElement extends HTMLElement {
         this.minPointAmount = this.minPointAmount == 0 ? 5 : this.minPointAmount;
         this.maxPointAmount = this.parseNumber(this.getAttribute('max_waves'));
         this.maxPointAmount = this.maxPointAmount == 0 ? 8 : this.maxPointAmount;
+
+        // Retrieve directional values
+        this.globalWaveDirection = this.parseVector2(this.getAttribute('wave_direction'));
+        this.gradientDirection = this.parseVector2(this.getAttribute('gradient_direction'));
+        if (this.gradientDirection == null)
+            this.gradientDirection = new Vector2(0.5, 1);
 		
 		// Create SVG element
         this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -167,6 +174,10 @@ class WaveElement extends HTMLElement {
     createGradient(){
         this.gradientElement = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
         this.gradientElement.id = 'waveGradientElement-' + Date.now();
+        this.gradientElement.setAttribute('x1', -this.gradientDirection.x);
+        this.gradientElement.setAttribute('y1', -this.gradientDirection.y);
+        this.gradientElement.setAttribute('x2', this.gradientDirection.x);
+        this.gradientElement.setAttribute('y2', this.gradientDirection.y);
 
         let stopOne = document.createElementNS("http://www.w3.org/2000/svg", "stop");
         stopOne.setAttribute('offset', '0%');
@@ -416,6 +427,8 @@ class WaveElement extends HTMLElement {
         
         let foundDir = this.edgePointsPercentage.top[this.topPointsElements.length - 1].direction;
         this.cornerPoints[1].direction = new Vector2(-foundDir.x, -foundDir.y);
+        foundDir = this.edgePointsPercentage.bottom[this.bottomPointsElements.length - 1].direction;
+        this.cornerPoints[3].direction = new Vector2(-foundDir.x, -foundDir.y);
         
         // Create path with all points
         const points = [
@@ -476,6 +489,13 @@ class WaveElement extends HTMLElement {
 			return null;
 		const [r, g, b, a] = value.split(',').map(Number);
 		return new Color(r, g, b, a);
+	}
+
+	parseVector2(value) {
+		if (value == null)
+			return null;
+		const [x, y] = value.split(',').map(Number);
+		return new Vector2(x, y);
 	}
 
     parseNumber(value){
