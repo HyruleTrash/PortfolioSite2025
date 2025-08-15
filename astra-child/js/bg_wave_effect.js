@@ -156,11 +156,11 @@ class WaveElement extends HTMLElement {
 		this.svg.setAttribute('height', '100%');
 
         // Decouple from relative's
-        this.style.width = this.offsetWidth + "px";
-        this.style.height = this.offsetHeight + "px";
-        this.style.left = this.clientLeft + "px";
-        this.style.top = this.clientTop + "px";
-        this.style.position = "absolute";
+        // this.style.width = this.offsetWidth + "px";
+        // this.style.height = this.offsetHeight + "px";
+        // this.style.left = this.clientLeft + "px";
+        // this.style.top = this.clientTop + "px";
+        // this.style.position = "absolute";
 
         // Generate random points along edges
         this.topPointsElements = Array(this.randomRange(this.minPointAmount, this.maxPointAmount));
