@@ -277,11 +277,10 @@ class WaveElement extends HTMLElement {
             if (i === 0) {
                 lastDir = this.randomRange(0, 1) >= 0.5 ? 1 : -1;
             }else {
-                // Force opposite direction of previous curve
                 lastDir *= -1;
             }
             if (i == this.edgePointsPercentage.top.length - 1)
-                lastDir *= -1;
+                lastDir *= -1; // edge case on last curve, dunno why but this needs to be done
             
             if (lastDir == 1){
                 this.edgePointsPercentage.top[i].direction = new Vector2(-cp.y, cp.x).toArray()[0];
@@ -293,6 +292,8 @@ class WaveElement extends HTMLElement {
 
             console.log(`Curve ${i}: Direction multiplier = ${lastDir}`);
         }
+
+        this.edgePointsPercentage.bottom.reverse();
 
         console.log(this.edgePointsPercentage);
     }
@@ -383,23 +384,23 @@ class WaveElement extends HTMLElement {
             let cp = new Vector2(prevPoint.x, prevPoint.y).getDirectionTowards(point).muliply(this.waveOffsetStrength);
             
             const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            circle.setAttribute('cx', prevPoint.x + cp.x);
-            circle.setAttribute('cy', prevPoint.y + cp.y);
+            circle.setAttribute('cx', point.x + cp.x);
+            circle.setAttribute('cy', point.y + cp.y);
             circle.setAttribute('r', '3');
             circle.style.fill = '#44ff51ff';
             this.svg.appendChild(circle);
 
-
             let cpOffset = new Vector2();
             if (i > bottomPos && i < bottomPos + this.edgePoints.bottom.length){
+                cp = new Vector2(point.x, point.y).getDirectionTowards(prevPoint).muliply(this.waveOffsetStrength);
                 cpOffset = new Vector2(
-                    prevPoint.x + point.direction.x * this.waveDirectionStrength,
-                    prevPoint.y + point.direction.y * this.waveDirectionStrength
+                    point.x + -prevPoint.direction.x * this.waveDirectionStrength,
+                    point.y + -prevPoint.direction.y * this.waveDirectionStrength
                 );
             }else{
                 cpOffset = new Vector2(
-                    prevPoint.x + -point.direction.x * this.waveDirectionStrength,
-                    prevPoint.y + -point.direction.y * this.waveDirectionStrength
+                    prevPoint.x + point.direction.x * this.waveDirectionStrength,
+                    prevPoint.y + point.direction.y * this.waveDirectionStrength
                 );
             }
 
