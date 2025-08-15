@@ -91,7 +91,7 @@ class Vector2 {
 class WaveElement extends HTMLElement {
 	static observedAttributes = ["start_color", "end_color", "wave_size", "min_waves", "max_waves"];
     verticalPadding = 20;
-    minPointDistance = 10;
+    minPointDistance = 50;
     minPointAmount = 5;
     maxPointAmount = 8;
     waveSize;
@@ -264,7 +264,9 @@ class WaveElement extends HTMLElement {
     }
 
     getRandomPointX(maxProcentX, array){
-        while (true) {
+        const maxAttempts = 30;
+        let attempts = 0;
+        while (attempts < maxAttempts) {
             let foundPoint = new Vector2(this.randomRange(0, maxProcentX), 0);
             let alone = true;
             for (let i = 0; i < array.length; i++) {
@@ -278,7 +280,12 @@ class WaveElement extends HTMLElement {
             }
             if (alone)
                 return foundPoint;
+            attempts++;
+            if (attempts >= maxAttempts)
+                break;
         }
+        this.minPointDistance = Math.max(1, this.minPointDistance / 2);
+        return null
     }
 
     initializeEdgePoints(){
@@ -288,9 +295,22 @@ class WaveElement extends HTMLElement {
         };
 
         // Calculate top points as before
-        for (let i = 0; i < this.edgePointsPercentage.top.length; i++) {
-            this.edgePointsPercentage.top[i] = this.getRandomPointX(100 / (this.topPointsElements.length + 1) * (i + 1), this.edgePointsPercentage.top);
-            this.edgePointsPercentage.top[i].y = this.randomRange(0, this.waveSize);
+        let isDone;
+        while (true){
+            this.edgePointsPercentage.top = Array(this.topPointsElements.length);
+            isDone = true;
+
+            for (let i = 0; i < this.edgePointsPercentage.top.length; i++) {
+                this.edgePointsPercentage.top[i] = this.getRandomPointX(100 / (this.topPointsElements.length + 1) * (i + 1), this.edgePointsPercentage.top);
+                if (this.edgePointsPercentage.top[i] == null){
+                    isDone = false;
+                    break;
+                }
+                this.edgePointsPercentage.top[i].y = this.randomRange(0, this.waveSize);
+            }
+            if (isDone){
+                break;
+            }
         }
 
         // Copy positions but mirror directions for bottom
