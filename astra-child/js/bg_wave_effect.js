@@ -70,6 +70,14 @@ class Vector2 {
             return new Vector2(0, 0);
         return new Vector2(dx/magnitude, dy/magnitude);
     }
+
+    getDifference(other){
+        return new Vector2(other.x - this.x, other.y - this.y);
+    }
+
+    getMagnitude(){
+        return Math.sqrt(this.x*this.x + this.y*this.y);
+    }
 }
 
 class WaveElement extends HTMLElement {
@@ -289,8 +297,6 @@ class WaveElement extends HTMLElement {
                 this.edgePointsPercentage.top[i].direction = new Vector2(cp.y, -cp.x).toArray()[0];
                 this.edgePointsPercentage.bottom[i].direction = new Vector2(-cp.y, cp.x).toArray()[0]; // Mirrored version
             }
-
-            console.log(`Curve ${i}: Direction multiplier = ${lastDir}`);
         }
 
         this.edgePointsPercentage.bottom.reverse();
@@ -373,31 +379,25 @@ class WaveElement extends HTMLElement {
                 continue;
             }
 
-            const nextPoint = points[(i + 1) % points.length];
+            // const nextPoint = points[(i + 1) % points.length];
             if (point.direction == undefined){
                 pathData += `L ${point.x},${point.y} `;
                 continue;
             }
             
             // Calculate control points for curves
-            // let cp = new Vector2();
-            let cp = new Vector2(prevPoint.x, prevPoint.y).getDirectionTowards(point).muliply(this.waveOffsetStrength);
-            
-            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            circle.setAttribute('cx', point.x + cp.x);
-            circle.setAttribute('cy', point.y + cp.y);
-            circle.setAttribute('r', '3');
-            circle.style.fill = '#44ff51ff';
-            this.svg.appendChild(circle);
-
+            let cp = new Vector2();
             let cpOffset = new Vector2();
             if (i > bottomPos && i < bottomPos + this.edgePoints.bottom.length){
-                cp = new Vector2(point.x, point.y).getDirectionTowards(prevPoint).muliply(this.waveOffsetStrength);
+                cp = new Vector2(point.x, point.y).getDirectionTowards(prevPoint);
+                cp = cp.muliply(new Vector2(point.x, point.y).getDifference(prevPoint).getMagnitude() * (this.waveOffsetStrength / 100));
                 cpOffset = new Vector2(
                     point.x + -prevPoint.direction.x * this.waveDirectionStrength,
                     point.y + -prevPoint.direction.y * this.waveDirectionStrength
                 );
             }else{
+                cp = new Vector2(prevPoint.x, prevPoint.y).getDirectionTowards(point);
+                cp = cp.muliply(new Vector2(prevPoint.x, prevPoint.y).getDifference(point).getMagnitude() * (this.waveOffsetStrength / 100));
                 cpOffset = new Vector2(
                     prevPoint.x + point.direction.x * this.waveDirectionStrength,
                     prevPoint.y + point.direction.y * this.waveDirectionStrength
@@ -405,16 +405,6 @@ class WaveElement extends HTMLElement {
             }
 
             cp = cpOffset.add(cp);
-            // cp = cpOffset;
-            
-            // Draw control point circles
-            const circle1 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            circle1.setAttribute('cx', cp.x);
-            circle1.setAttribute('cy', cp.y);
-            circle1.setAttribute('r', '3');
-            circle1.style.fill = '#4444ff';
-            this.svg.appendChild(circle1);
-        
             pathData += `Q ${cp.x},${cp.y} ${point.x},${point.y} `;
         }
         pathData += 'Z';
