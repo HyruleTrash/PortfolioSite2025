@@ -21,22 +21,30 @@ class Color {
 	isValidRgb(values) {
 	  	return values.every(val => !isNaN(val) && val >= 0 && val <= 255);
 	}
+
+    toString(){
+        return `rgba(${this.r},${this.g},${this.b},${this.a})`;
+    }
 }
 
 class Vector2 {
 	x = 0;
 	y = 0;
-    direction = {x: 0, y:0};
+    direction = null;
 
-	constructor(x = 0, y = 0, direction = {x: 0, y: 0}){
+	constructor(x = 0, y = 0, direction = null){
 		this.x = x;
 		this.y = y;
         this.direction = direction;
 	}
 
 	toArray(){
-		return [{x: this.x, y: this.y}];
+		return [this.toObject()];
 	}
+
+    toObject(){
+        return {x: this.x, y: this.y, direction: this.direction == null ? undefined : this.direction.toObject()};
+    }
 
     normalize(){
         let magnitude = Math.sqrt(this.x*this.x + this.y*this.y);
@@ -81,7 +89,7 @@ class Vector2 {
 }
 
 class WaveElement extends HTMLElement {
-	static observedAttributes = ["start_color", "end_color"];
+	static observedAttributes = ["start_color", "end_color", "wave_size", "min_waves", "max_waves"];
     verticalPadding = 20;
     minPointDistance = 10;
     minPointAmount = 5;
@@ -93,7 +101,7 @@ class WaveElement extends HTMLElement {
 	endColor;
 	width = 0;
 	height = 0;
-	cornerPointsElements = Array(4);
+	// cornerPointsElements = Array(4);
     topPointsElements;
     bottomPointsElements;
     pathElement;
@@ -111,6 +119,12 @@ class WaveElement extends HTMLElement {
         this.waveSize = this.parseNumber(this.getAttribute('wave_size'));
         this.verticalPadding += this.waveSize;
         this.verticalPadding += this.waveOffsetStrength;
+
+        // Retrieve min max values
+        this.minPointAmount = this.parseNumber(this.getAttribute('min_waves'));
+        this.minPointAmount = this.minPointAmount == 0 ? 5 : this.minPointAmount;
+        this.maxPointAmount = this.parseNumber(this.getAttribute('max_waves'));
+        this.maxPointAmount = this.maxPointAmount == 0 ? 8 : this.maxPointAmount;
 		
 		// Create SVG element
         this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -134,14 +148,37 @@ class WaveElement extends HTMLElement {
         // Create circles for points
         this.initializePoints();
 
+        // Create definitions element
+        this.definitionsElement = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+        this.svg.appendChild(this.definitionsElement);
+
+        // Create gradient
+        this.createGradient();
+
         this.pathElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        this.pathElement.style.fill = 'none';
-        this.pathElement.style.stroke = 'black';
-        this.pathElement.style.strokeWidth = '1';
+        this.pathElement.style.fill = `url(#${this.gradientElement.id})`;
+        // this.pathElement.style.stroke = 'black';
+        // this.pathElement.style.strokeWidth = '1';
         this.svg.appendChild(this.pathElement);
 		
 		this.isAnimating = false;
 	}
+
+    createGradient(){
+        this.gradientElement = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+        this.gradientElement.id = 'waveGradientElement-' + Date.now();
+
+        let stopOne = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+        stopOne.setAttribute('offset', '0%');
+        stopOne.setAttribute('stop-color', this.startColor.toString());
+        this.gradientElement.appendChild(stopOne);
+        let stopTwo = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+        stopTwo.setAttribute('offset', '100%');
+        stopTwo.setAttribute('stop-color', this.endColor.toString());
+        this.gradientElement.appendChild(stopTwo);
+
+        this.definitionsElement.appendChild(this.gradientElement);
+    }
 
     initializePoints(){
         this.updateContentSize();
@@ -149,34 +186,34 @@ class WaveElement extends HTMLElement {
         this.initializeEdgePoints();
         this.updateEdgePoints();
         
-        for (let i = 0; i < this.cornerPointsElements.length; i++) {
-			const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-			circle.setAttribute('cx', this.cornerPoints[i].x);
-			circle.setAttribute('cy', this.cornerPoints[i].y);
-			circle.setAttribute('r', '4');
-			circle.style.fill = '#ff4444';
-			this.svg.appendChild(circle);
-            this.cornerPointsElements[i] = circle;
-        }
+        // for (let i = 0; i < this.cornerPointsElements.length; i++) {
+		// 	const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+		// 	circle.setAttribute('cx', this.cornerPoints[i].x);
+		// 	circle.setAttribute('cy', this.cornerPoints[i].y);
+		// 	circle.setAttribute('r', '4');
+		// 	circle.style.fill = '#ff4444';
+		// 	this.svg.appendChild(circle);
+        //     this.cornerPointsElements[i] = circle;
+        // }
 
-        for (let i = 0; i < this.topPointsElements.length; i++) {
-			const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-			circle.setAttribute('cx', this.edgePoints.top[i].x);
-			circle.setAttribute('cy', this.edgePoints.top[i].y);
-			circle.setAttribute('r', '4');
-			circle.style.fill = '#ff4444';
-			this.svg.appendChild(circle);
-            this.topPointsElements[i] = circle;
-        }
-        for (let i = 0; i < this.bottomPointsElements.length; i++) {
-			const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-			circle.setAttribute('cx', this.edgePoints.bottom[i].x);
-			circle.setAttribute('cy', this.edgePoints.bottom[i].y);
-			circle.setAttribute('r', '4');
-			circle.style.fill = '#ff4444';
-			this.svg.appendChild(circle);
-            this.bottomPointsElements[i] = circle;
-        }
+        // for (let i = 0; i < this.topPointsElements.length; i++) {
+		// 	const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+		// 	circle.setAttribute('cx', this.edgePoints.top[i].x);
+		// 	circle.setAttribute('cy', this.edgePoints.top[i].y);
+		// 	circle.setAttribute('r', '4');
+		// 	circle.style.fill = '#ff4444';
+		// 	this.svg.appendChild(circle);
+        //     this.topPointsElements[i] = circle;
+        // }
+        // for (let i = 0; i < this.bottomPointsElements.length; i++) {
+		// 	const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+		// 	circle.setAttribute('cx', this.edgePoints.bottom[i].x);
+		// 	circle.setAttribute('cy', this.edgePoints.bottom[i].y);
+		// 	circle.setAttribute('r', '4');
+		// 	circle.style.fill = '#ff4444';
+		// 	this.svg.appendChild(circle);
+        //     this.bottomPointsElements[i] = circle;
+        // }
     }
 
 	randomRange(min, max){
@@ -300,8 +337,6 @@ class WaveElement extends HTMLElement {
         }
 
         this.edgePointsPercentage.bottom.reverse();
-
-        console.log(this.edgePointsPercentage);
     }
 
     getEdgePointX(percentage){
@@ -339,26 +374,30 @@ class WaveElement extends HTMLElement {
         this.updateCornerVectors();
 		
         // update Point positions
-        for (let i = 0; i < this.cornerPointsElements.length; i++) {
-			this.cornerPointsElements[i].setAttribute('cx', this.cornerPoints[i].x);
-			this.cornerPointsElements[i].setAttribute('cy', this.cornerPoints[i].y);
-        }
+        // for (let i = 0; i < this.cornerPointsElements.length; i++) {
+		// 	this.cornerPointsElements[i].setAttribute('cx', this.cornerPoints[i].x);
+		// 	this.cornerPointsElements[i].setAttribute('cy', this.cornerPoints[i].y);
+        // }
 
         this.updateEdgePoints();
 
-        for (let i = 0; i < this.topPointsElements.length; i++) {
-			this.topPointsElements[i].setAttribute('cx', this.edgePoints.top[i].x);
-			this.topPointsElements[i].setAttribute('cy', this.edgePoints.top[i].y);
-        }
-        for (let i = 0; i < this.bottomPointsElements.length; i++) {
-			this.bottomPointsElements[i].setAttribute('cx', this.edgePoints.bottom[i].x);
-			this.bottomPointsElements[i].setAttribute('cy', this.edgePoints.bottom[i].y);
-        }
+        // for (let i = 0; i < this.topPointsElements.length; i++) {
+		// 	this.topPointsElements[i].setAttribute('cx', this.edgePoints.top[i].x);
+		// 	this.topPointsElements[i].setAttribute('cy', this.edgePoints.top[i].y);
+        // }
+        // for (let i = 0; i < this.bottomPointsElements.length; i++) {
+		// 	this.bottomPointsElements[i].setAttribute('cx', this.edgePoints.bottom[i].x);
+		// 	this.bottomPointsElements[i].setAttribute('cy', this.edgePoints.bottom[i].y);
+        // }
 	}
 
 	createShape() {
-        // Create path with all points
         const bottomPos = this.edgePoints.top.length + 3;
+        
+        let foundDir = this.edgePointsPercentage.top[this.topPointsElements.length - 1].direction;
+        this.cornerPoints[1].direction = new Vector2(-foundDir.x, -foundDir.y);
+        
+        // Create path with all points
         const points = [
             ...this.cornerPoints[0].toArray(),
             ...this.edgePoints.top,
@@ -367,7 +406,7 @@ class WaveElement extends HTMLElement {
             ...this.edgePoints.bottom,
             ...this.cornerPoints[3].toArray()
         ];
-
+        
 		let pathData = '';
         for (let i = 0; i < points.length; i++) {
             const prevPoint = points[(i - 1 + points.length) % points.length];

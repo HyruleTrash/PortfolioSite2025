@@ -18,18 +18,29 @@ function add_bg_wave_effect( $atts ){
         return "<span>[bg_wave_effect] Invalid height format</span>";
     }
 
-	$waveSize = isset($atts['wave_size']) ? $atts['wave_size'] : '0';
-	
+	$waveSize = $atts['wave_size'];
     // Validate waveSize format
-    if (!preg_match('/^\d+(?:\.\d+)?$/', $waveSize)) {
+    if (!validityCheckNumber($waveSize)) {
         return "<span>[bg_wave_effect] Invalid wave_size format</span>";
+    }
+
+	$minWaves = $atts['min_waves'];
+    // Validate waveSize format
+    if (!validityCheckNumber($waveSize)) {
+        return "<span>[bg_wave_effect] Invalid min_waves format</span>";
+    }
+	$maxWaves = $atts['max_waves'];
+    // Validate waveSize format
+    if (!validityCheckNumber($waveSize)) {
+        return "<span>[bg_wave_effect] Invalid max_waves format</span>";
     }
 	
 	$output = "<wave-svg-element style='height: {$height}'";
 	$startColorHtml = "start_color='{$startColor['red']},{$startColor['green']},{$startColor['blue']},{$startColor['alpha']}'";
 	$endColorHtml = "end_color='{$endColor['red']},{$endColor['green']},{$endColor['blue']},{$endColor['alpha']}'";
+	$minMaxWavesHtml = "min_waves='{$minWaves}' max_waves='{$maxWaves}'";
 	$waveSizeHtml = "wave_size='{$waveSize}'";
 	
-	return "{$output} {$startColorHtml} {$endColorHtml} {$waveSizeHtml}/>";
+	return "{$output} {$startColorHtml} {$endColorHtml} {$waveSizeHtml} {$minMaxWavesHtml}/>";
 }
 ?>

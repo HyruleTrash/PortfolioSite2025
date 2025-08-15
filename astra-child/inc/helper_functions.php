@@ -35,4 +35,10 @@ function parseRGBA($colorString): ?array {
         'alpha' => $a
     ];
 }
+
+function validityCheckNumber($numberString) : bool{
+    if (!isset($numberString) || !preg_match('/^\d+(?:\.\d+)?$/', $numberString))
+        return false;
+    return true;
+}
 ?>
