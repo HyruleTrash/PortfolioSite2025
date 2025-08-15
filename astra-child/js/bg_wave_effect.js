@@ -1,5 +1,23 @@
 "use-strict";
 
+const checkHardwareCapabilities = () => {
+    const capabilities = {
+        // Check for GPU acceleration support
+        gpuAcceleration: 'GPU' in window && !!window.GPU,
+        
+        // Check for high-resolution display
+        highResolution: window.devicePixelRatio > 1,
+        
+        // Check for touch input availability
+        touchSupport: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+        
+        // Check for motion preferences
+        reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    };
+    
+    return capabilities;
+};
+
 class Color {
 	r = 0;
 	g = 0;
@@ -251,6 +269,13 @@ class WaveElement extends HTMLElement {
 
 	animate() {
 		if (!this.isAnimating) return;
+
+        if (!this.hardwareChecked){
+            let capabilities = checkHardwareCapabilities();
+            if (capabilities.reducedMotion)
+                this.isAnimating = false;
+            this.hardwareChecked = true;
+        }
 		
 		this.updateShapeSize();
 		this.createShape();
