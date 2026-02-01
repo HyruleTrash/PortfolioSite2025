@@ -1,0 +1,13 @@
+
+wave-element{
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    height: 10vh;
+    display: block;
+}
+
+wave-element > canvas{
+    width: 100%;
+    height: 100%;
+}
