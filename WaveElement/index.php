@@ -9,7 +9,7 @@
 </head>
 <body>
     <h1>Test</h1>
-    <wave-element height="Test"></wave-element>
+    <!-- <wave-element height="Test"></wave-element> -->
     <wave-element height="300"></wave-element>
 </body>
 </html>

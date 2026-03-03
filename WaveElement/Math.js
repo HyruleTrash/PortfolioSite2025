@@ -7,14 +7,15 @@ export function RandomRange(min, max) {
 export class Vector2 {
 	x = 0;
 	y = 0;
-    dir = null;
-    lineWidth = null;
 
-	constructor(x = 0, y = 0, direction = null, lineWidth = null){
-		this.x = x;
-		this.y = y;
-        this.dir = direction;
-        this.lineWidth = lineWidth;
+	constructor(a = 0, b = 0){
+        if (a instanceof Vector2){
+            this.x = a.x;
+            this.y = a.y;
+        }else{
+            this.x = a;
+            this.y = b;
+        }
 	}
 
 	ToArray(){
@@ -22,7 +23,7 @@ export class Vector2 {
 	}
 
     ToObject(){
-        return {x: this.x, y: this.y, direction: this.dir == null ? undefined : this.dir.toObject(), lineWidth: this.lineWidth};
+        return {x: this.x, y: this.y};
     }
 
     Normalize(){
@@ -36,17 +37,35 @@ export class Vector2 {
     }
 
     Add(other){
-        let result = new Vector2(this.x, this.y);
+        let result = new Vector2(this);
         result.x += other.x;
         result.y += other.y;
         return result;
     }
 
-    Multiply(other){
-        let result = new Vector2(this.x, this.y);
-        result.x *= other;
-        result.y *= other;
+    Multiply(a){
+        let result = new Vector2(this);
+        if (a instanceof Vector2){
+            result.x *= a.x;
+            result.y *= a.y;
+        }else{
+            result.x *= a;
+            result.y *= a;
+        }
         return result;
+    }
+
+    ToNegative(){
+        let result = new Vector2(this);
+        result.x = -result.x;
+        result.y = -result.y;
+        return result;
+    }
+
+    GetDist(other){
+        const dx = other.x - this.x;
+        const dy = other.y - this.y;
+        return Math.sqrt(dx*dx + dy*dy);
     }
 
     GetDirTowards(other){
@@ -64,5 +83,9 @@ export class Vector2 {
 
     GetMag(){
         return Math.sqrt(this.x*this.x + this.y*this.y);
+    }
+
+    toString(){
+        return `[${this.x}, ${this.y}]`;
     }
 }
