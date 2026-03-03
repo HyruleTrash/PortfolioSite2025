@@ -46,6 +46,7 @@ class WaveStruct{
 		const n = this.controlPoints.length - 1;
 		let x = 0;
 		let y = 0;
+		let lw = 0;
 
 		for (let i = 0; i <= n; i++) {
 			const bin = this.#Binomial(n, i);
@@ -53,9 +54,10 @@ class WaveStruct{
 
 			x += weight * this.controlPoints[i].x;
 			y += weight * this.controlPoints[i].y;
+			lw += weight * this.controlPoints[i].lineWidth;
 		}
 
-		return { x, y };
+		return new WavePoint(x, y, lw);
 	}
 
 	#Binomial(n, k) {
@@ -148,13 +150,23 @@ export class Wave extends HTMLElement {
 	}
 
 	DrawWave(ctx, wave) {
-		for (let i = 0; i < wave.points.length - 1; i++) {
-			let firstPoint = wave.points[i];
-			let secondPoint = wave.points[i + 1];
+		ctx.beginPath();
+		ctx.moveTo(wave.points[0].x, wave.points[0].y);
 
-			this.DrawCircle(ctx, firstPoint, 5);
-			this.DrawCircle(ctx, secondPoint, 5);
+		for (let i = 1; i < wave.points.length; i++) {
+			ctx.lineTo(wave.points[i].x, wave.points[i].y - wave.points[i].lineWidth)
 		}
+		for (let i = wave.points.length - 1; i >= 0; i--) {
+			ctx.lineTo(wave.points[i].x, wave.points[i].y + wave.points[i].lineWidth)
+		}
+
+		ctx.closePath();
+
+		const grad = ctx.createLinearGradient(0,0,this.width,0);
+		grad.addColorStop(0, "lightblue");
+		grad.addColorStop(1, "darkblue");
+		ctx.fillStyle = grad;
+		ctx.fill();
 	}
 
 	DrawCircle(ctx, a, size, color = "rgb(200 200 200)") {
@@ -179,11 +191,10 @@ export class Wave extends HTMLElement {
 			let x = this.width / array.length * i;
 			x += RandomRange(-variationX, variationX);
 
-			lw = RandomRange(lineMinWidth, lineMaxWidth);
-
 			let variation = (1 / array.length) * i;
-			array[i] = new WavePoint(x, this.GenerateYPosition(center, variation, array.length, (1 - variation) * variationY));
-			array[i].lineWidth = lw;
+			array[i] = new WavePoint(x, this.GenerateYPosition(center, variation, array.length, (1 - variation) * variationY), lw);
+			
+			lw = RandomRange(lineMinWidth, lineMaxWidth);
 		}
 
 		lw = RandomRange(lineMinWidth, lineMaxWidth);
