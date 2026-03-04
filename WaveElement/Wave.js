@@ -30,16 +30,30 @@ class WavePoint extends Vector2 {
  * @typedef {WaveStruct}
  */
 class WaveStruct{
-	constructor(givenPoints, resolution = 100) {
+	constructor(givenPoints, height, resolution = 200) {
+		this.height = height;
 		this.controlPoints = givenPoints;
 		this.points = [];
 
 		if (!givenPoints || givenPoints.length < 2) return;
 
+		let tempPoints = [];
 		for (let i = 0; i <= resolution; i++) {
 			const t = i / resolution;
-			this.points.push(this.#BezierPoint(t));
+			tempPoints.push(
+				this.#ClampPoint(this.#BezierPoint(t))
+			);
 		}
+
+		this.points.push(tempPoints[0]);
+		let lastPoint = tempPoints[0];
+		const dist = 10;
+		tempPoints.forEach(tempPoint => {
+			if (tempPoint.GetDist(lastPoint) > dist){
+				lastPoint = tempPoint;
+				this.points.push(tempPoint);
+			}
+		});
 	}
 
 	#BezierPoint(t) {
@@ -71,6 +85,16 @@ class WaveStruct{
 		}
 		return result;
 	}
+
+	#ClampPoint(point) {
+		const min = point.lineWidth;
+		const max = this.height - point.lineWidth; // we need height
+
+		if (point.y < min) point.y = min;
+		if (point.y > max) point.y = max;
+
+		return point;
+	}
 }
 
 /**
@@ -82,14 +106,25 @@ class WaveStruct{
  * @extends {HTMLElement}
  */
 export class Wave extends HTMLElement {
+	static idCounter = 0;	
+
 	constructor() {
 		super();
 
-		this.seed = TimeSeed();
+		this.identifier = Wave.idCounter;
+		this.seed = TimeSeed() ^ this.identifier;
 		SetSeed(this.seed);
+		Wave.idCounter++;
+
 		this.waveStyle = RandomRange(-1, 1) > 0;
-		this.phaseOffset = RandomRange(0, Math.PI * RandomRange(0, 4));
+		this.phaseOffset = RandomRange(0, 100) / 100;
 		this.flowDir = Math.round(RandomRange(-1, 1));
+		this.direction = new Vector2(
+			RandomRange(-1, 1),
+			RandomRange(-1, 1)
+		).Normalize();
+		this.yScale = 0.5;     // vertical squash amount
+		this.shearStrength = RandomRange(10, 100);
 
 		this._ro = new ResizeObserver(entries => {
 			for (const entry of entries) {
@@ -143,12 +178,12 @@ export class Wave extends HTMLElement {
 		ctx.fillStyle = "rgb(200 0 0)";
 		ctx.fillRect(0, 0, this.width, this.height);
 
-		let amount = 5; // TODO generate this
+		let amount = 3; // TODO generate this
 		SetSeed(this.seed);
 		let points = this.GeneratePoints(amount, 50, 200);
 
 		if (!this.ValidatePoints(points)){
-			let wave = new WaveStruct(points);
+			let wave = new WaveStruct(points, this.height);
 			this.DrawWave(ctx, wave);
 		}
 	}
@@ -166,7 +201,7 @@ export class Wave extends HTMLElement {
 
 		ctx.closePath();
 
-		const grad = ctx.createLinearGradient(0,0,this.width,0);
+		const grad = ctx.createLinearGradient(wave.points[0].x, wave.points[0].y, wave.points[wave.points.length - 1].x, wave.points[wave.points.length - 1].y);
 		grad.addColorStop(0, "lightblue"); // TODO generate this
 		grad.addColorStop(1, "darkblue");
 		ctx.fillStyle = grad;
@@ -181,18 +216,24 @@ export class Wave extends HTMLElement {
 	}
 
 	GeneratePoints(amount, variationX, variationY) {
-		const center = this.height / 2;
+		const centerY = this.height / 2;
+		const centerX = this.width / 2;
 		const lineMinWidth = this.PercentOfHeight(2); // TODO take this from element values
 		const lineMaxWidth = this.PercentOfHeight(10);
-		const lineBaseWidth = this.PercentOfHeight(30);
+		const lineBaseWidth = this.PercentOfHeight(40);
 		const flowDir = this.flowDir;
-		const beginAndEndOffset = 100;
+		const beginAndEndOffset = 200;
 
 		let array = new Array((amount * 3) + 2);
 
+		//#region Generating points and line weights
 		let lw = RandomRange(lineMinWidth, lineMaxWidth);
 		let variation = this.GetTValueBasedOnDirFlow(array.length, flowDir, 0);
-		array[0] = new WavePoint(-beginAndEndOffset, center, lw + lineBaseWidth * variation);
+		let usedLw = lw + lineBaseWidth * variation;
+		if (flowDir != 1){
+			usedLw += lineMaxWidth;
+		}
+		array[0] = new WavePoint(-beginAndEndOffset, centerY, usedLw);
 
 		for (let i = 1; i < array.length - 1; i++) {
 			lw = RandomRange(lineMinWidth, lineMaxWidth);
@@ -201,14 +242,40 @@ export class Wave extends HTMLElement {
 			x += RandomRange(-variationX, variationX);
 
 			variation = this.GetTValueBasedOnDirFlow(array.length, flowDir, i);
-			let y = this.GenerateYPosition(center, variation, array.length, (1 - variation) * variationY);
-			y = this.ClampYWithinBounds(y, lw * 2);
+			let y = this.GenerateYPosition(centerY, variation, array.length, (1 - variation) * variationY);
+			y = this.ClampYWithinBounds(y, lw);
 			array[i] = new WavePoint(x, y, lw + lineBaseWidth * variation);
 		}
 
 		lw = RandomRange(lineMinWidth, lineMaxWidth);
 		variation = this.GetTValueBasedOnDirFlow(array.length, flowDir, 0);
-		array[array.length - 1] = new WavePoint(this.width + beginAndEndOffset, center, array[array.length - 2].lineWidth + lw + lineBaseWidth * variation);
+		usedLw = lw + lineBaseWidth * variation;
+		if (flowDir == 1){
+			usedLw += array[array.length - 2].lineWidth;
+		}
+
+		array[array.length - 1] = new WavePoint(this.width + beginAndEndOffset, centerY, usedLw);
+		//#endregion
+
+		for (let i = 0; i < array.length; i++) {
+			let point = array[i];
+
+			// ---- 1. Vertical scaling (around center) ----
+			point.y = centerY + (point.y - centerY) * this.yScale;
+
+			// ---- 2. Shear along Y following direction ----
+			const normalizedX = (point.x - centerX) / centerX;
+			const shearOffset =
+				normalizedX *
+				this.direction.y *
+				this.shearStrength;
+
+			point.y += shearOffset;
+
+			point.y = this.ClampYWithinBounds(point.y, point.lineWidth);
+
+			array[i] = point;
+		}
 
 		return array;
 	}
@@ -217,7 +284,7 @@ export class Wave extends HTMLElement {
 		if (flowDir == 1){
 			return (1 / amount) * i;
 		}else{
-			return ((1 / amount) * i) - 1;
+			return (1 / amount) * (amount - i);
 		}
 	}
 
