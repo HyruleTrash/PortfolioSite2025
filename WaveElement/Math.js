@@ -1,4 +1,4 @@
-"use-strict";
+"use strict";
 
 function createSeededRandom(seed) {
   return function () {

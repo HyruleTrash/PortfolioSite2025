@@ -1,7 +1,6 @@
-"use-strict";
+"use strict";
 
 import { RandomRange, Vector2, SetSeed, TimeSeed } from "./Math.js";
-
 
 /**
  * Holds a point inside the wave, used for remembering lineWidth
@@ -29,7 +28,7 @@ class WavePoint extends Vector2 {
  * @class WaveStruct
  * @typedef {WaveStruct}
  */
-class WaveStruct{
+class WaveStruct {
 	constructor(givenPoints, height, resolution = 200) {
 		this.height = height;
 		this.controlPoints = givenPoints;
@@ -40,16 +39,14 @@ class WaveStruct{
 		let tempPoints = [];
 		for (let i = 0; i <= resolution; i++) {
 			const t = i / resolution;
-			tempPoints.push(
-				this.#ClampPoint(this.#BezierPoint(t))
-			);
+			tempPoints.push(this.#ClampPoint(this.#BezierPoint(t)));
 		}
 
 		this.points.push(tempPoints[0]);
 		let lastPoint = tempPoints[0];
 		const dist = 10;
-		tempPoints.forEach(tempPoint => {
-			if (tempPoint.GetDist(lastPoint) > dist){
+		tempPoints.forEach((tempPoint) => {
+			if (tempPoint.GetDist(lastPoint) > dist) {
 				lastPoint = tempPoint;
 				this.points.push(tempPoint);
 			}
@@ -75,7 +72,9 @@ class WaveStruct{
 	}
 
 	#Binomial(n, k) {
-		return this.#Factorial(n) / (this.#Factorial(k) * this.#Factorial(n - k));
+		return (
+			this.#Factorial(n) / (this.#Factorial(k) * this.#Factorial(n - k))
+		);
 	}
 
 	#Factorial(n) {
@@ -106,7 +105,7 @@ class WaveStruct{
  * @extends {HTMLElement}
  */
 export class Wave extends HTMLElement {
-	static idCounter = 0;	
+	static idCounter = 0;
 
 	constructor() {
 		super();
@@ -121,12 +120,17 @@ export class Wave extends HTMLElement {
 		this.flowDir = Math.round(RandomRange(-1, 1));
 		this.direction = new Vector2(
 			RandomRange(-1, 1),
-			RandomRange(-1, 1)
+			RandomRange(-1, 1),
 		).Normalize();
-		this.yScale = 0.5;     // vertical squash amount
+		this.yScale = 0.5; // vertical squash amount
 		this.shearStrength = RandomRange(10, 100);
 
-		this.resizeObserver = new ResizeObserver(entries => {
+		this.amountOfWaves = 3;
+		this.lineMinWidth = 2;
+		this.lineMaxWidth = 10;
+		this.lineBaseWidth = 40;
+
+		this.resizeObserver = new ResizeObserver((entries) => {
 			for (const entry of entries) {
 				const { width, height } = entry.contentRect;
 				this.OnResize(width, height);
@@ -135,102 +139,119 @@ export class Wave extends HTMLElement {
 
 		this.visibilityObserver = new IntersectionObserver((entries) => {
 			for (const entry of entries) {
-				if (entry.isIntersecting){
+				if (entry.isIntersecting) {
 					entry.target.VisibilityChanged();
 				}
 			}
 		});
 
-		this.CheckMutations = (mutationList) => {
+		this._CheckMutations = (mutationList) => {
 			let relevant = false;
 			for (const mutation of mutationList) {
-				if (mutation.type !== "attributes"){
+				if (mutation.type !== "attributes") {
 					continue;
 				}
-				if (mutation.attributeName == "height"){
-					const foundHeight = this.getAttribute("height");
-					this.height = parseInt(foundHeight); // assuming pixels
+				switch (mutation.attributeName) {
+					case "height": {
+						let foundHeight = this.getAttribute("height");
+						this.height = parseInt(foundHeight); // assuming pixels
 
-					if (!isNaN(this.height)) {
-						this.style.height = this.height + "px";
+						if (!isNaN(this.height)) {
+							this.style.height = this.height + "px";
+						}
+						relevant = true;
+						break;
 					}
-					relevant = true;
-				}else if (mutation.attributeName == "amount"){
-					const amountOfWaves = this.getAttribute("amount");
-					this.amountOfWaves = parseInt(amountOfWaves);
-					if (isNaN(this.amountOfWaves)){
-						this.amountOfWaves = 3;
+					case "amount": {
+						const amountOfWaves = this.getAttribute("amount");
+						this.amountOfWaves = parseInt(amountOfWaves);
+						if (isNaN(this.amountOfWaves)) {
+							this.amountOfWaves = 3;
+						}
+						relevant = true;
+						break;
 					}
-					relevant = true;
-				}else if (mutation.attributeName == "lineminwidth"){
-					const lineMinWidth = this.getAttribute("lineminwidth");
-					this.lineMinWidth = parseInt(lineMinWidth); // assuming value between 0, and 100
-					if (isNaN(this.lineMinWidth)){
-						this.lineMinWidth = 2;
+					case "lineminwidth": {
+						const lineMinWidth = this.getAttribute("lineminwidth");
+						this.lineMinWidth = parseInt(lineMinWidth); // assuming value between 0, and 100
+						if (isNaN(this.lineMinWidth)) {
+							this.lineMinWidth = 2;
+						}
+						relevant = true;
+						break;
 					}
-					relevant = true;
-				}else if (mutation.attributeName == "linemaxwidth"){
-					const lineMaxWidth = this.getAttribute("linemaxwidth");
-					this.lineMaxWidth = parseInt(lineMaxWidth); // assuming value between 0, and 100
-					if (isNaN(this.lineMaxWidth)){
-						this.lineMaxWidth = 10;
+					case "linemaxwidth": {
+						const lineMaxWidth = this.getAttribute("linemaxwidth");
+						this.lineMaxWidth = parseInt(lineMaxWidth); // assuming value between 0, and 100
+						if (isNaN(this.lineMaxWidth)) {
+							this.lineMaxWidth = 10;
+						}
+						relevant = true;
+						break;
 					}
-					relevant = true;
-				}else if (mutation.attributeName == "linebasewidth"){
-					const lineBaseWidth = this.getAttribute("linebasewidth");
-					this.lineBaseWidth = parseInt(lineBaseWidth); // assuming value between 0, and 100
-					if (isNaN(this.lineBaseWidth)){
-						this.lineBaseWidth = 40;
+					case "linebasewidth": {
+						const lineBaseWidth =
+							this.getAttribute("linebasewidth");
+						this.lineBaseWidth = parseInt(lineBaseWidth); // assuming value between 0, and 100
+						if (isNaN(this.lineBaseWidth)) {
+							this.lineBaseWidth = 40;
+						}
+						relevant = true;
+						break;
 					}
-					relevant = true;
-				}else if (mutation.attributeName == "firstcolor" || mutation.attributeName == "lastcolor"){
-					relevant = true;
+					case "firstcolor":
+					case "lastcolor": {
+						relevant = true;
+						break;
+					}
+
+					default:
+						break;
 				}
 			}
-			if (relevant == true){
+			if (relevant == true) {
 				this.CheckCanvas();
 			}
-		}
-		this.mutationObserver = new MutationObserver(this.CheckMutations);
+		};
+		this._mutationObserver = new MutationObserver(this._CheckMutations);
 	}
 
 	connectedCallback() {
 		this.resizeObserver.observe(this);
 		this.visibilityObserver.observe(this, { trackVisibility: true });
-		this.mutationObserver.observe(this, { attributes: true })
+		this._mutationObserver.observe(this, { attributes: true });
 
 		this.canvas = document.createElement("canvas");
-		this.canvas.innerText = "Wave element failed to load"
+		this.canvas.innerText = "Wave element failed to load";
 		this.appendChild(this.canvas);
 
 		// check mutations to initialise default values or existing values
-		this.CheckMutations([
-			{ type: "attributes", attributeName: "height" }, 
+		this._CheckMutations([
+			{ type: "attributes", attributeName: "height" },
 			{ type: "attributes", attributeName: "amount" },
 			{ type: "attributes", attributeName: "lineminwidth" },
 			{ type: "attributes", attributeName: "linemaxwidth" },
 			{ type: "attributes", attributeName: "linebasewidth" },
 		]);
 
-		this.visable = this.checkVisibility();
 		this.CheckCanvas();
 	}
 
-	CheckCanvas(){
-		this.visable = this.checkVisibility();
+	CheckCanvas() {
+		this.visible = this.checkVisibility();
 		if (this.canvas.getContext) {
 			const ctx = this.canvas.getContext("2d");
 			this.Draw(ctx);
-		}else{
+		} else {
 			// canvas-unsupported code here
-			this.removeChild(this.canvas)
+			this.removeChild(this.canvas);
 		}
 	}
 
 	disconnectedCallback() {
 		this.resizeObserver.disconnect();
 		this.visibilityObserver.disconnect();
-		this.mutationObserver.disconnect();
+		this._mutationObserver.disconnect();
 	}
 
 	OnResize(width, height) {
@@ -241,20 +262,21 @@ export class Wave extends HTMLElement {
 		this.CheckCanvas();
 	}
 
-	VisibilityChanged(){
+	VisibilityChanged() {
 		this.CheckCanvas();
 	}
 
 	Draw(ctx) {
-		if (this.visable == false){
+		if (this.visible == false) {
 			return;
 		}
+		ctx.clearRect(0, 0, this.width, this.height);
 
 		let amount = this.amountOfWaves;
 		SetSeed(this.seed);
 		let points = this.GeneratePoints(amount, 50, 200);
 
-		if (!this.ValidatePoints(points)){
+		if (!this.ValidatePoints(points)) {
 			let wave = new WaveStruct(points, this.height);
 			this.DrawWave(ctx, wave);
 		}
@@ -265,17 +287,31 @@ export class Wave extends HTMLElement {
 		ctx.moveTo(wave.points[0].x, wave.points[0].y);
 
 		for (let i = 1; i < wave.points.length; i++) {
-			ctx.lineTo(wave.points[i].x, wave.points[i].y - wave.points[i].lineWidth)
+			ctx.lineTo(
+				wave.points[i].x,
+				wave.points[i].y - wave.points[i].lineWidth,
+			);
 		}
 		for (let i = wave.points.length - 1; i >= 0; i--) {
-			ctx.lineTo(wave.points[i].x, wave.points[i].y + wave.points[i].lineWidth)
+			ctx.lineTo(
+				wave.points[i].x,
+				wave.points[i].y + wave.points[i].lineWidth,
+			);
 		}
 
 		ctx.closePath();
 
 		const center = new Vector2(this.width / 2, this.height / 2);
-		const offset = new Vector2(this.direction.x * this.width, this.direction.y * this.height);
-		const grad = ctx.createLinearGradient(center.x - offset.x, center.y - offset.y, center.x + offset.x, center.y + offset.y);
+		const offset = new Vector2(
+			this.direction.x * this.width,
+			this.direction.y * this.height,
+		);
+		const grad = ctx.createLinearGradient(
+			center.x - offset.x,
+			center.y - offset.y,
+			center.x + offset.x,
+			center.y + offset.y,
+		);
 
 		grad.addColorStop(0, this.getAttribute("firstcolor"));
 		grad.addColorStop(1, this.getAttribute("lastcolor"));
@@ -299,25 +335,30 @@ export class Wave extends HTMLElement {
 		const flowDir = this.flowDir;
 		const beginAndEndOffset = 200;
 
-		let array = new Array((amount * 3) + 2);
+		let array = new Array(amount * 3 + 2);
 
 		//#region Generating points and line weights
 		let lw = RandomRange(lineMinWidth, lineMaxWidth);
 		let variation = this.GetTValueBasedOnDirFlow(array.length, flowDir, 0);
 		let usedLw = lw + lineBaseWidth * variation;
-		if (flowDir != 1){
+		if (flowDir != 1) {
 			usedLw += lineMaxWidth;
 		}
 		array[0] = new WavePoint(-beginAndEndOffset, centerY, usedLw);
 
 		for (let i = 1; i < array.length - 1; i++) {
 			lw = RandomRange(lineMinWidth, lineMaxWidth);
-			
-			let x = this.width / array.length * i;
+
+			let x = (this.width / array.length) * i;
 			x += RandomRange(-variationX, variationX);
 
 			variation = this.GetTValueBasedOnDirFlow(array.length, flowDir, i);
-			let y = this.GenerateYPosition(centerY, variation, array.length, (1 - variation) * variationY);
+			let y = this.GenerateYPosition(
+				centerY,
+				variation,
+				array.length,
+				(1 - variation) * variationY,
+			);
 			y = this.ClampYWithinBounds(y, lw);
 			array[i] = new WavePoint(x, y, lw + lineBaseWidth * variation);
 		}
@@ -325,11 +366,15 @@ export class Wave extends HTMLElement {
 		lw = RandomRange(lineMinWidth, lineMaxWidth);
 		variation = this.GetTValueBasedOnDirFlow(array.length, flowDir, 0);
 		usedLw = lw + lineBaseWidth * variation;
-		if (flowDir == 1){
+		if (flowDir == 1) {
 			usedLw += array[array.length - 2].lineWidth;
 		}
 
-		array[array.length - 1] = new WavePoint(this.width + beginAndEndOffset, centerY, usedLw);
+		array[array.length - 1] = new WavePoint(
+			this.width + beginAndEndOffset,
+			centerY,
+			usedLw,
+		);
 		//#endregion
 
 		for (let i = 0; i < array.length; i++) {
@@ -341,9 +386,7 @@ export class Wave extends HTMLElement {
 			// ---- 2. Shear along Y following direction ----
 			const normalizedX = (point.x - centerX) / centerX;
 			const shearOffset =
-				normalizedX *
-				this.direction.y *
-				this.shearStrength;
+				normalizedX * this.direction.y * this.shearStrength;
 
 			point.y += shearOffset;
 
@@ -355,19 +398,23 @@ export class Wave extends HTMLElement {
 		return array;
 	}
 
-	GetTValueBasedOnDirFlow(amount, flowDir, i){
-		if (flowDir == 1){
+	GetTValueBasedOnDirFlow(amount, flowDir, i) {
+		if (flowDir == 1) {
 			return (1 / amount) * i;
-		}else{
+		} else {
 			return (1 / amount) * (amount - i);
 		}
 	}
 
 	GenerateYPosition(center, t, frequency, amplitude) {
-		if (this.waveStyle){
-			return center + Math.sin((frequency * t) + this.phaseOffset) * amplitude;
-		}else{
-			return center + Math.cos((frequency * t) + this.phaseOffset) * amplitude;
+		if (this.waveStyle) {
+			return (
+				center + Math.sin(frequency * t + this.phaseOffset) * amplitude
+			);
+		} else {
+			return (
+				center + Math.cos(frequency * t + this.phaseOffset) * amplitude
+			);
 		}
 	}
 
@@ -384,15 +431,69 @@ export class Wave extends HTMLElement {
 	ValidatePoints(array) {
 		for (let i = 0; i < array.length; i++) {
 			const element = array[i];
-			if (isNaN(element.x) || isNaN(element.y))
-				return true;
+			if (isNaN(element.x) || isNaN(element.y)) return true;
 		}
 		return false;
 	}
 
 	PercentOfHeight(val) {
-		return this.height * (val / 100)
+		return this.height * (val / 100);
+	}
+}
+
+export class MovingWave extends Wave {
+	constructor() {
+		super();
+		this.lastTime = 1;
+		this.Loop = this.Loop.bind(this);
+		
+		this.speed = 1;
+		this.CheckMutations = (mutationList) => {
+			for (const mutation of mutationList) {
+				if (mutation.type !== "attributes") {
+					continue;
+				}
+				if (mutation.attributeName == "speed") {
+					this.speed = this.getAttribute("speed");
+					if (isNaN(this.speed)) {
+						this.speed = 1;
+					}
+				}
+			}
+		};
+		this.mutationObserver = new MutationObserver(this.CheckMutations);
+	}
+
+	Loop(currentTime) {
+		// currentTime is in milliseconds
+		const deltaTime = (currentTime - this.lastTime) / 1000; // convert to seconds
+		this.lastTime = currentTime;
+
+		this.Update(deltaTime);
+
+		// console.log(this.phaseOffset);
+
+		this.CheckCanvas();
+		requestAnimationFrame(this.Loop);
+	}
+
+	Update(dt) {
+		if (this.visable == false) {
+			return;
+		}
+
+		this.phaseOffset += dt * this.speed;
+	}
+
+	connectedCallback() {
+		super.connectedCallback();
+
+		this.CheckMutations([
+			{ type: "attributes", attributeName: "speed" },
+		]);
+		requestAnimationFrame(this.Loop);
 	}
 }
 
 customElements.define("wave-element", Wave);
+customElements.define("moving-wave-element", MovingWave);
