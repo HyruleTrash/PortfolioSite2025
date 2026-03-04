@@ -1,7 +1,37 @@
 "use-strict";
 
+function createSeededRandom(seed) {
+  return function () {
+    seed |= 0;
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export function TimeSeed() {
+  // current time in ms
+  let x = Date.now();
+
+  // mix bits (xorshift-style avalanche)
+  x ^= x >>> 16;
+  x = Math.imul(x, 0x7feb352d);
+  x ^= x >>> 15;
+  x = Math.imul(x, 0x846ca68b);
+  x ^= x >>> 16;
+
+  return x >>> 0; // force unsigned 32-bit
+}
+
+var seededRandom = createSeededRandom(12345);
+
+export function SetSeed(seed){
+    seededRandom = createSeededRandom(seed);
+}
+
 export function RandomRange(min, max) {
-  return Math.random() * (max - min) + min;
+  return seededRandom() * (max - min) + min;
 }
 
 export class Vector2 {

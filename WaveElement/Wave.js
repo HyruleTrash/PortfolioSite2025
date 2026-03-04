@@ -1,6 +1,6 @@
 "use-strict";
 
-import { RandomRange, Vector2 } from "./Math.js";
+import { RandomRange, Vector2, SetSeed, TimeSeed } from "./Math.js";
 
 
 /**
@@ -85,8 +85,11 @@ export class Wave extends HTMLElement {
 	constructor() {
 		super();
 
-		this.waveStyle = RandomRange(-1, 1);
-		this.phaseOffset = RandomRange(0, Math.PI * 4);
+		this.seed = TimeSeed();
+		SetSeed(this.seed);
+		this.waveStyle = RandomRange(-1, 1) > 0;
+		this.phaseOffset = RandomRange(0, Math.PI * RandomRange(0, 4));
+		this.flowDir = Math.round(RandomRange(-1, 1));
 
 		this._ro = new ResizeObserver(entries => {
 			for (const entry of entries) {
@@ -140,7 +143,8 @@ export class Wave extends HTMLElement {
 		ctx.fillStyle = "rgb(200 0 0)";
 		ctx.fillRect(0, 0, this.width, this.height);
 
-		let amount = 5;
+		let amount = 5; // TODO generate this
+		SetSeed(this.seed);
 		let points = this.GeneratePoints(amount, 50, 200);
 
 		if (!this.ValidatePoints(points)){
@@ -163,7 +167,7 @@ export class Wave extends HTMLElement {
 		ctx.closePath();
 
 		const grad = ctx.createLinearGradient(0,0,this.width,0);
-		grad.addColorStop(0, "lightblue");
+		grad.addColorStop(0, "lightblue"); // TODO generate this
 		grad.addColorStop(1, "darkblue");
 		ctx.fillStyle = grad;
 		ctx.fill();
@@ -178,37 +182,61 @@ export class Wave extends HTMLElement {
 
 	GeneratePoints(amount, variationX, variationY) {
 		const center = this.height / 2;
-		const lineMinWidth = this.PercentOfHeight(5);
-		const lineMaxWidth = this.PercentOfHeight(20);
+		const lineMinWidth = this.PercentOfHeight(2); // TODO take this from element values
+		const lineMaxWidth = this.PercentOfHeight(10);
+		const lineBaseWidth = this.PercentOfHeight(30);
+		const flowDir = this.flowDir;
 		const beginAndEndOffset = 100;
 
 		let array = new Array((amount * 3) + 2);
 
 		let lw = RandomRange(lineMinWidth, lineMaxWidth);
-		array[0] = new WavePoint(-beginAndEndOffset, center, lw);
+		let variation = this.GetTValueBasedOnDirFlow(array.length, flowDir, 0);
+		array[0] = new WavePoint(-beginAndEndOffset, center, lw + lineBaseWidth * variation);
 
 		for (let i = 1; i < array.length - 1; i++) {
+			lw = RandomRange(lineMinWidth, lineMaxWidth);
+			
 			let x = this.width / array.length * i;
 			x += RandomRange(-variationX, variationX);
 
-			let variation = (1 / array.length) * i;
-			array[i] = new WavePoint(x, this.GenerateYPosition(center, variation, array.length, (1 - variation) * variationY), lw);
-			
-			lw = RandomRange(lineMinWidth, lineMaxWidth);
+			variation = this.GetTValueBasedOnDirFlow(array.length, flowDir, i);
+			let y = this.GenerateYPosition(center, variation, array.length, (1 - variation) * variationY);
+			y = this.ClampYWithinBounds(y, lw * 2);
+			array[i] = new WavePoint(x, y, lw + lineBaseWidth * variation);
 		}
 
 		lw = RandomRange(lineMinWidth, lineMaxWidth);
-		array[array.length - 1] = new WavePoint(this.width + beginAndEndOffset, center, lw);
+		variation = this.GetTValueBasedOnDirFlow(array.length, flowDir, 0);
+		array[array.length - 1] = new WavePoint(this.width + beginAndEndOffset, center, array[array.length - 2].lineWidth + lw + lineBaseWidth * variation);
 
 		return array;
 	}
 
+	GetTValueBasedOnDirFlow(amount, flowDir, i){
+		if (flowDir == 1){
+			return (1 / amount) * i;
+		}else{
+			return ((1 / amount) * i) - 1;
+		}
+	}
+
 	GenerateYPosition(center, t, frequency, amplitude) {
-		if (this.waveStyle > 0){
+		if (this.waveStyle){
 			return center + Math.sin((frequency * t) + this.phaseOffset) * amplitude;
 		}else{
 			return center + Math.cos((frequency * t) + this.phaseOffset) * amplitude;
 		}
+	}
+
+	ClampYWithinBounds(y, lw) {
+		const min = lw;
+		const max = this.height - lw;
+
+		if (y < min) return min;
+		if (y > max) return max;
+
+		return y;
 	}
 
 	ValidatePoints(array) {
