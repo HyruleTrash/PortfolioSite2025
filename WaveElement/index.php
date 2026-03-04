@@ -11,19 +11,7 @@
 
 <body>
     <h1>Test</h1>
-    <!-- <wave-element height="Test"></wave-element> -->
-    <wave-element height="300"></wave-element>
-    <wave-element height="300"></wave-element>
-    <wave-element height="300"></wave-element>
-    <wave-element height="300"></wave-element>
-    <wave-element height="300"></wave-element>
-    <wave-element height="300"></wave-element>
-    <wave-element height="300"></wave-element>
-    <wave-element height="300"></wave-element>
-    <wave-element height="300"></wave-element>
-    <wave-element height="300"></wave-element>
-    <wave-element height="300"></wave-element>
-    <wave-element height="300"></wave-element>
+    <wave-element firstcolor="#5e5cfbff" lastcolor="#b538feff"></wave-element>
 </body>
 
 </html>

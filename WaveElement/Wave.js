@@ -126,59 +126,131 @@ export class Wave extends HTMLElement {
 		this.yScale = 0.5;     // vertical squash amount
 		this.shearStrength = RandomRange(10, 100);
 
-		this._ro = new ResizeObserver(entries => {
+		this.resizeObserver = new ResizeObserver(entries => {
 			for (const entry of entries) {
 				const { width, height } = entry.contentRect;
 				this.OnResize(width, height);
 			}
 		});
+
+		this.visibilityObserver = new IntersectionObserver((entries) => {
+			for (const entry of entries) {
+				if (entry.isIntersecting){
+					entry.target.VisibilityChanged();
+				}
+			}
+		});
+
+		this.CheckMutations = (mutationList) => {
+			let relevant = false;
+			for (const mutation of mutationList) {
+				if (mutation.type !== "attributes"){
+					continue;
+				}
+				if (mutation.attributeName == "height"){
+					const foundHeight = this.getAttribute("height");
+					this.height = parseInt(foundHeight); // assuming pixels
+
+					if (!isNaN(this.height)) {
+						this.style.height = this.height + "px";
+					}
+					relevant = true;
+				}else if (mutation.attributeName == "amount"){
+					const amountOfWaves = this.getAttribute("amount");
+					this.amountOfWaves = parseInt(amountOfWaves);
+					if (isNaN(this.amountOfWaves)){
+						this.amountOfWaves = 3;
+					}
+					relevant = true;
+				}else if (mutation.attributeName == "lineminwidth"){
+					const lineMinWidth = this.getAttribute("lineminwidth");
+					this.lineMinWidth = parseInt(lineMinWidth); // assuming value between 0, and 100
+					if (isNaN(this.lineMinWidth)){
+						this.lineMinWidth = 2;
+					}
+					relevant = true;
+				}else if (mutation.attributeName == "linemaxwidth"){
+					const lineMaxWidth = this.getAttribute("linemaxwidth");
+					this.lineMaxWidth = parseInt(lineMaxWidth); // assuming value between 0, and 100
+					if (isNaN(this.lineMaxWidth)){
+						this.lineMaxWidth = 10;
+					}
+					relevant = true;
+				}else if (mutation.attributeName == "linebasewidth"){
+					const lineBaseWidth = this.getAttribute("linebasewidth");
+					this.lineBaseWidth = parseInt(lineBaseWidth); // assuming value between 0, and 100
+					if (isNaN(this.lineBaseWidth)){
+						this.lineBaseWidth = 40;
+					}
+					relevant = true;
+				}else if (mutation.attributeName == "firstcolor" || mutation.attributeName == "lastcolor"){
+					relevant = true;
+				}
+			}
+			if (relevant == true){
+				this.CheckCanvas();
+			}
+		}
+		this.mutationObserver = new MutationObserver(this.CheckMutations);
 	}
 
 	connectedCallback() {
-		this._ro.observe(this);
-
-		const amount = this.getAttribute("height");
-		this.height = parseInt(amount); // assuming pixels
-
-		if (!isNaN(this.height)) {
-			this.style.height = this.height + "px";
-		}
+		this.resizeObserver.observe(this);
+		this.visibilityObserver.observe(this, { trackVisibility: true });
+		this.mutationObserver.observe(this, { attributes: true })
 
 		this.canvas = document.createElement("canvas");
 		this.canvas.innerText = "Wave element failed to load"
 		this.appendChild(this.canvas);
 
-		if (!this.canvas.getContext) {
-			// canvas-unsupported code here
-			this.removeChild(this.canvas)
-		} else {
+		// check mutations to initialise default values or existing values
+		this.CheckMutations([
+			{ type: "attributes", attributeName: "height" }, 
+			{ type: "attributes", attributeName: "amount" },
+			{ type: "attributes", attributeName: "lineminwidth" },
+			{ type: "attributes", attributeName: "linemaxwidth" },
+			{ type: "attributes", attributeName: "linebasewidth" },
+		]);
+
+		this.visable = this.checkVisibility();
+		this.CheckCanvas();
+	}
+
+	CheckCanvas(){
+		this.visable = this.checkVisibility();
+		if (this.canvas.getContext) {
 			const ctx = this.canvas.getContext("2d");
 			this.Draw(ctx);
+		}else{
+			// canvas-unsupported code here
+			this.removeChild(this.canvas)
 		}
 	}
 
 	disconnectedCallback() {
-		this._ro.disconnect();
+		this.resizeObserver.disconnect();
+		this.visibilityObserver.disconnect();
+		this.mutationObserver.disconnect();
 	}
 
 	OnResize(width, height) {
 		this.width = width;
 		this.height = height;
-
-		// console.log(width, height);
 		this.canvas.height = height;
 		this.canvas.width = width;
-		if (this.canvas.getContext) {
-			const ctx = this.canvas.getContext("2d");
-			this.Draw(ctx);
-		}
+		this.CheckCanvas();
+	}
+
+	VisibilityChanged(){
+		this.CheckCanvas();
 	}
 
 	Draw(ctx) {
-		ctx.fillStyle = "rgb(200 0 0)";
-		ctx.fillRect(0, 0, this.width, this.height);
+		if (this.visable == false){
+			return;
+		}
 
-		let amount = 3; // TODO generate this
+		let amount = this.amountOfWaves;
 		SetSeed(this.seed);
 		let points = this.GeneratePoints(amount, 50, 200);
 
@@ -201,9 +273,12 @@ export class Wave extends HTMLElement {
 
 		ctx.closePath();
 
-		const grad = ctx.createLinearGradient(wave.points[0].x, wave.points[0].y, wave.points[wave.points.length - 1].x, wave.points[wave.points.length - 1].y);
-		grad.addColorStop(0, "lightblue"); // TODO generate this
-		grad.addColorStop(1, "darkblue");
+		const center = new Vector2(this.width / 2, this.height / 2);
+		const offset = new Vector2(this.direction.x * this.width, this.direction.y * this.height);
+		const grad = ctx.createLinearGradient(center.x - offset.x, center.y - offset.y, center.x + offset.x, center.y + offset.y);
+
+		grad.addColorStop(0, this.getAttribute("firstcolor"));
+		grad.addColorStop(1, this.getAttribute("lastcolor"));
 		ctx.fillStyle = grad;
 		ctx.fill();
 	}
@@ -218,9 +293,9 @@ export class Wave extends HTMLElement {
 	GeneratePoints(amount, variationX, variationY) {
 		const centerY = this.height / 2;
 		const centerX = this.width / 2;
-		const lineMinWidth = this.PercentOfHeight(2); // TODO take this from element values
-		const lineMaxWidth = this.PercentOfHeight(10);
-		const lineBaseWidth = this.PercentOfHeight(40);
+		const lineMinWidth = this.PercentOfHeight(this.lineMinWidth);
+		const lineMaxWidth = this.PercentOfHeight(this.lineMaxWidth);
+		const lineBaseWidth = this.PercentOfHeight(this.lineBaseWidth);
 		const flowDir = this.flowDir;
 		const beginAndEndOffset = 200;
 
