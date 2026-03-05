@@ -8,8 +8,8 @@ import { WavePoint } from "./WavePoint.js";
  * @class WaveStruct
  * @typedef {WaveStruct}
  */
-// eslint-disable-next-line no-unused-vars
-class WaveStruct {
+ 
+export class WaveStruct {
     constructor(givenPoints, height, resolution = 200) {
         this.height = height;
         this.controlPoints = givenPoints;

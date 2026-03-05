@@ -10,7 +10,7 @@ import { Vector2 } from "./Math.js";
  * @extends {Vector2}
  */
 // eslint-disable-next-line no-unused-vars
-class WavePoint extends Vector2 {
+export class WavePoint extends Vector2 {
 	lineWidth = 0;
 
 	constructor(x = 0, y = 0, lineWidth) {
