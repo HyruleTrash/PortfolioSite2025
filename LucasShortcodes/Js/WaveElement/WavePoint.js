@@ -1,6 +1,6 @@
 "use strict";
 
-import { Vector2 } from "./Math.js";
+import { Vector2 } from "../Math.js";
 
 /**
  * Holds a point inside the wave, used for remembering lineWidth

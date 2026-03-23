@@ -1,6 +1,6 @@
 "use strict";
 
-import { RandomRange, Vector2, SetSeed, TimeSeed } from "./Math.js";
+import { RandomRange, Vector2, SetSeed, TimeSeed } from "../Math.js";
 import { WavePoint } from "./WavePoint.js";
 import { WaveStruct } from "./WaveStruct.js";
 
