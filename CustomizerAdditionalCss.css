@@ -1,0 +1,80 @@
+
+.btn-secondary > div > div > a:hover
+{
+    border-color: var(--e-global-color-astglobalcolor4) !important;
+    fill: var(--e-global-color-astglobalcolor4);
+}
+
+.btn-secondary > div > div > a:hover > span{
+    color: var(--e-global-color-astglobalcolor4) !important;
+}
+
+.btn-secondary > div > div > a > span > span {
+    width: 5rem !important;
+    height: 100% !important;
+}
+
+.btn-secondary > div > div > a > span > span > svg {
+    width: 5rem !important;
+    height: 5rem !important;
+}
+
+.btn-secondary > div > div > a{
+    border-color: var(--ast-global-color-0) !important;
+    fill: var(--ast-global-color-0);
+}
+
+.btn-secondary > div > div > a > span{
+    color: var(--ast-global-color-0) !important;
+}
+
+.menu-item > a::before{
+    border-style: solid;
+    border-width: 4px;
+    border-radius: 15px !important;
+    border-color: var(--e-global-color-astglobalcolor3) !important;
+    background-color: var(--e-global-color-astglobalcolor4) !important;
+}
+
+.menu-item > a{
+    color: var(--e-global-color-astglobalcolor3) !important;
+}
+
+.menu-item > a:hover:before {
+    border-radius: 15px !important;
+    background-color: var(--e-global-color-astglobalcolor0) !important;
+}
+
+.menu-item > a:hover{
+    color: var(--e-global-color-astglobalcolor4) !important;
+}
+
+.menu-item > a:active:before {
+    border-color: var(--e-global-color-astglobalcolor1) !important;
+    background-color: var(--e-global-color-astglobalcolor0) !important;
+}
+
+.menu-item > a:active{
+    color: var(--e-global-color-astglobalcolor4) !important;
+}
+
+.elementor-button{
+    border-style: solid;
+    border-width: 4px;
+    border-radius: 15px !important;
+    border-color: var(--e-global-color-astglobalcolor3) !important;
+    background-color: var(--e-global-color-astglobalcolor4) !important;
+    color: var(--e-global-color-astglobalcolor3) !important;
+}
+
+.elementor-button:hover {
+    border-radius: 15px !important;
+    background-color: var(--e-global-color-astglobalcolor0) !important;
+    color: var(--e-global-color-astglobalcolor4) !important;
+}
+
+.elementor-button:active {
+    border-color: var(--e-global-color-astglobalcolor1) !important;
+    background-color: var(--e-global-color-astglobalcolor0) !important;
+    color: var(--e-global-color-astglobalcolor4) !important;
+}

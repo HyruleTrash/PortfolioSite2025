@@ -53,6 +53,12 @@ function ls_create_wave_effect($atts)
         $speedAttr = "speed='{$speed}'";
     }
 
+    // Boolean attributes (default false)
+    $hasTop = isset($atts['hastop']) ? filter_var($atts['hastop'], FILTER_VALIDATE_BOOLEAN) : false;
+    $hasBottom = isset($atts['hasbottom']) ? filter_var($atts['hasbottom'], FILTER_VALIDATE_BOOLEAN) : false;
+    $hasTopAttr = $hasTop ? "hastop='true'" : "hastop='false'";
+    $hasBottomAttr = $hasBottom ? "hasbottom='true'" : "hasbottom='false'";
+
     // Build attributes
     $firstColorHtml = "firstcolor='rgba({$firstColor['red']},{$firstColor['green']},{$firstColor['blue']},{$firstColor['alpha']})'";
     $lastColorHtml = "lastcolor='rgba({$lastColor['red']},{$lastColor['green']},{$lastColor['blue']},{$lastColor['alpha']})'";
@@ -63,5 +69,16 @@ function ls_create_wave_effect($atts)
     $lineBaseHtml = "linebasewidth='{$lineBase}'";
 
     // Output
-    return "<{$tag} style='height: {$height}' {$firstColorHtml} {$lastColorHtml} {$amountHtml} {$lineMinHtml} {$lineMaxHtml} {$lineBaseHtml} {$speedAttr}></{$tag}>";
+    return "<{$tag} 
+        style='height: {$height}' 
+        {$firstColorHtml} 
+        {$lastColorHtml} 
+        {$amountHtml} 
+        {$lineMinHtml} 
+        {$lineMaxHtml} 
+        {$lineBaseHtml} 
+        {$speedAttr}
+        {$hasTopAttr}
+        {$hasBottomAttr}
+    ></{$tag}>";
 }

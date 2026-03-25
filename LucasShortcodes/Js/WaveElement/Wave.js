@@ -38,6 +38,9 @@ export class Wave extends HTMLElement {
 		this.lineMaxWidth = 10;
 		this.lineBaseWidth = 40;
 
+		this.hasTop = this.getAttribute("hastop") === 'true';
+		this.hasBottom = this.getAttribute("hasbottom") === 'true';
+
 		this.resizeObserver = new ResizeObserver((entries) => {
 			for (const entry of entries) {
 				const { width, height } = entry.contentRect;
@@ -98,8 +101,7 @@ export class Wave extends HTMLElement {
 						break;
 					}
 					case "linebasewidth": {
-						const lineBaseWidth =
-							this.getAttribute("linebasewidth");
+						const lineBaseWidth = this.getAttribute("linebasewidth");
 						this.lineBaseWidth = parseInt(lineBaseWidth); // assuming value between 0, and 100
 						if (isNaN(this.lineBaseWidth)) {
 							this.lineBaseWidth = 40;
@@ -109,6 +111,16 @@ export class Wave extends HTMLElement {
 					}
 					case "firstcolor":
 					case "lastcolor": {
+						relevant = true;
+						break;
+					}
+					case "hastop": {
+						this.hasTop = this.getAttribute("hastop") === 'true';
+						relevant = true;
+						break;
+					}
+					case "hasbottom": {
+						this.hasBottom = this.getAttribute("hasbottom") === 'true';
 						relevant = true;
 						break;
 					}
@@ -195,16 +207,30 @@ export class Wave extends HTMLElement {
 		ctx.moveTo(wave.points[0].x, wave.points[0].y);
 
 		for (let i = 1; i < wave.points.length; i++) {
-			ctx.lineTo(
-				wave.points[i].x,
-				wave.points[i].y - wave.points[i].lineWidth,
-			);
+			if (!this.hasTop){
+				ctx.lineTo(
+					wave.points[i].x,
+					wave.points[i].y - wave.points[i].lineWidth,
+				);
+			}else{
+				ctx.lineTo(
+					wave.points[i].x,
+					0,
+				);
+			}
 		}
 		for (let i = wave.points.length - 1; i >= 0; i--) {
-			ctx.lineTo(
-				wave.points[i].x,
-				wave.points[i].y + wave.points[i].lineWidth,
-			);
+			if (!this.hasBottom){
+				ctx.lineTo(
+					wave.points[i].x,
+					wave.points[i].y + wave.points[i].lineWidth,
+				);
+			}else{
+				ctx.lineTo(
+					wave.points[i].x,
+					this.height,
+				);
+			}
 		}
 
 		ctx.closePath();
