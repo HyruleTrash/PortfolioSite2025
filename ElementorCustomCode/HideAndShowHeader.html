@@ -1,0 +1,36 @@
+<!-- Hide and Show Header -->
+<script>
+var hiddenFixedElement = document.getElementById('hidden-fixed-header');
+var RelativeElement = document.getElementById('relative-header');
+
+RelativeElement.style.position = 'relative';
+hiddenFixedElement.style.position = 'fixed';
+	
+function headerUpdate(){
+	var currentScrollPos = window.pageYOffset;
+  if (RelativeElement.offsetHeight > currentScrollPos) {
+		RelativeElement.style.visibility = '';
+		hiddenFixedElement.style.visibility = 'hidden';
+		hiddenFixedElement.style.opacity = 0;
+		hiddenFixedElement.style.top = -hiddenFixedElement.offsetHeight + 'px';
+  } else {
+		RelativeElement.style.visibility = 'hidden';
+		hiddenFixedElement.style.visibility = '';
+		hiddenFixedElement.style.opacity = 1;
+		hiddenFixedElement.style.top = '0';
+  }
+}
+
+window.onscroll = function() {
+	headerUpdate();
+};
+	
+headerUpdate();
+</script>
+<style>
+/* Show Hide Sticky Header Speed Control */
+#hidden-fixed-header {
+	transition: all .4s ease!important;
+	width: 100vw;
+}
+</style>

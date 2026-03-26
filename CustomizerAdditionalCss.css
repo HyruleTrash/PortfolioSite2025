@@ -1,25 +1,25 @@
 
-.btn-secondary > div > div > a:hover
+.btn-secondary a:hover
 {
     border-color: var(--e-global-color-astglobalcolor4) !important;
     fill: var(--e-global-color-astglobalcolor4);
 }
 
-.btn-secondary > div > div > a:hover > span{
+.btn-secondary a:hover > span{
     color: var(--e-global-color-astglobalcolor4) !important;
 }
 
-.btn-secondary > div > div > a > span > span {
+.btn-secondary a > span > span {
     width: 5rem !important;
     height: 100% !important;
 }
 
-.btn-secondary > div > div > a > span > span > svg {
+.btn-secondary a > span > span > svg {
     width: 5rem !important;
     height: 5rem !important;
 }
 
-.btn-secondary > div > div > a{
+.btn-secondary a{
     border-color: var(--ast-global-color-0) !important;
     fill: var(--ast-global-color-0);
 }
@@ -28,24 +28,35 @@
     color: var(--ast-global-color-0) !important;
 }
 
-.menu-item::before {
+button[type='submit']::before{
+    color: var(--e-global-color-astglobalcolor0) !important;
+    content: "|";
+    font-size: 100%;
+    position: relative;
+    left: -0.2rem;
+}
+
+/* .menu-item::before {
     color: var(--e-global-color-astglobalcolor3) !important;
     content: "|";
-    display: block;
-    position: relative;
-    top: 27.5%;
+    position: absolute;
     height: 100%;
     font-size: 100%;
-    transform: translateX(1.5rem);
+    right: -0%;
 }
 
-.menu-item:has(> a:hover)::before{
+.menu-item:has(> a:hover)::before{ 
     color: var(--e-global-color-astglobalcolor4) !important;
-}
+} */
 
 .menu-item > a::before{
-    border-style: solid;
-    border-width: 4px;
+    opacity: 100 !important;
+
+    content: "";
+    position: absolute;
+
+    border-style: solid !important;
+    border-width: 4px !important;
     border-radius: 15px !important;
     border-color: var(--e-global-color-astglobalcolor3) !important;
     background-color: var(--e-global-color-astglobalcolor4) !important;
@@ -53,6 +64,10 @@
 
 .menu-item > a{
     color: var(--e-global-color-astglobalcolor3) !important;
+    position: relative;
+    display: inline-block;
+
+    background-color: transparent !important;
 }
 
 .menu-item > a:hover:before {
@@ -96,4 +111,13 @@
 
 .NotUnderlined > .elementor-widget-container > p > a{
     text-decoration: none !important;
+}
+
+#ast-scroll-top {
+    right: 1.3rem;
+    bottom: 6rem;
+}
+
+input[type='text']:focus, input[type='email']:focus, textarea:focus {
+    border-color: var(--e-global-color-astglobalcolor0) !important;
 }
