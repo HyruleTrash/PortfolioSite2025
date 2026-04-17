@@ -1,0 +1,43 @@
+<!-- Onclick project instances -->
+<script>
+	
+function projectsUpdate(){
+	var instances = document.getElementsByClassName('project-instance-link');
+    for (var i = 0; i < instances.length; i++) {
+        var link = instances[i];
+        var urls = link.getElementsByTagName('a');
+        if (urls.length === 0)
+        {
+            continue;
+        }
+        var parent = link.parentNode;
+        while (true){
+            try {
+                if (parent.classList.contains('post-wrapper')){
+                    break;
+                }
+                parent = parent.parentNode;
+            } catch (_) {
+                break;
+            }
+        }
+        parent.setAttribute('data-url', urls[0].href);
+        parent.addEventListener('click', function(e) {
+            e.target.open(e.target.getAttribute('data-url'), '_self');
+        });
+        urls[0].remove();
+    }
+}
+
+function startIfProjects() {
+    if (!document.body.textContent.includes('projects')) 
+    {
+        return;
+    }
+
+    setInterval(projectsUpdate, 1000);
+}
+
+// run once on load
+startIfProjects();
+</script>

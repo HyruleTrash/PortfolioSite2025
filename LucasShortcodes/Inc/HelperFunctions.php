@@ -1,4 +1,5 @@
 <?php
+if (! defined('ABSPATH')) exit;
 function parseRGBA($colorString): ?array
 {
     // Check if string starts with 'rgba('

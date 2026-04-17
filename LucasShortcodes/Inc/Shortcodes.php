@@ -1,5 +1,5 @@
 <?php
-
+if (! defined('ABSPATH')) exit;
 require_once LS_PATH . 'Inc/WaveElement.php';
 
 function shortcodes_init()

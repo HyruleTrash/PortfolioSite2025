@@ -8,6 +8,10 @@
  * Author:            Lucas Hoogerbrugge
  * Author URI:        https://lucashoogerbrugge.nl/
  * License:           All rights reserved
+ * 
+ * Requires Plugins: elementor
+ * Elementor tested up to: 4.0.2
+ * Elementor Pro tested up to: 4.0.2
  */
 
 /*
@@ -66,6 +70,9 @@ function ls_make_script_a_module($tag, $handle, $src)
 
     return $tag;
 }
+
+require_once LS_PATH . 'Inc/Elementor.php';
+add_action('elementor/dynamic_tags/register', 'ls_register_dynamic_tags');
 
 add_action('init', 'ls_init_function');
 function ls_init_function()

@@ -1,5 +1,5 @@
 <?php
-
+if (! defined('ABSPATH')) exit;
 require_once LS_PATH . 'Inc/HelperFunctions.php';
 
 function ls_create_wave_effect($atts)
