@@ -1,0 +1,65 @@
+<!-- FoldableProjects -->
+<script>
+function toggle(e){
+	var parent = e.currentTarget.parentNode;
+	var section = null;
+
+	while (parent) {
+		section = parent.querySelector('.HighlightedProjectSection');
+		if (section){
+			break;
+		}
+		parent = parent.parentNode;
+	}
+
+	if (!section){
+		return;
+	}
+
+	var isOpen = section.classList.contains('is-open');
+
+	if (isOpen){
+		e.currentTarget.classList.remove('FoldableHighlightedProjectTitle-is-open');
+		section.classList.remove('is-open');
+	} else {
+		e.currentTarget.classList.add('FoldableHighlightedProjectTitle-is-open');
+		section.classList.add('is-open');
+	}
+}
+
+function connectAllFoldables() {
+	var titles = document.getElementsByClassName('FoldableHighlightedProjectTitle');
+
+	for (var i = 0; i < titles.length; i++) {
+		var title = titles[i];
+
+		// prevent reconnect
+		if (title.classList.contains('fold-connected')){
+			continue;
+		}
+		title.classList.add('fold-connected');
+
+		var parent = title.parentNode;
+		var section = null;
+
+		while (parent) {
+			section = parent.querySelector('.HighlightedProjectSection');
+			if (section){
+				break;
+			}
+			parent = parent.parentNode;
+		}
+
+		if (!section){
+			continue;
+		}
+
+		section.classList.add('foldable'); // initial collapsed
+
+		title.classList.add('fold-trigger');
+		title.addEventListener('click', toggle);
+	}
+}
+
+setInterval(connectAllFoldables, 1000);
+</script>
