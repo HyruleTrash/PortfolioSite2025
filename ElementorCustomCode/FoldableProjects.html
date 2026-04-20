@@ -62,4 +62,11 @@ function connectAllFoldables() {
 }
 
 setInterval(connectAllFoldables, 1000);
+
+connectAllFoldables();
+
+var foldables = document.getElementsByClassName('fold-connected');
+if (foldables.length > 0){
+	foldables[0].click();
+}
 </script>

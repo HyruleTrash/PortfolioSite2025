@@ -180,12 +180,18 @@ input[type='text']:focus, input[type='email']:focus, textarea:focus {
     border-style: solid !important;
 }
 
-.swiper-slide {
-    align-self: center;
-}
-
 .borderedimagecarousel > div > div {
     border-radius: 25px;
+}
+
+.borderedimagecarousel > div > div,
+.borderedimagecarousel > div{
+    display: flow;
+    align-content: center;
+}
+
+.swiper-slide {
+    align-self:center;
 }
 
 /* collapsed */
